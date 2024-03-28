@@ -1,5 +1,6 @@
 import bpy
 from .blender.com import trial_ui
+from .blender.exp.trial import glTF2ExportUserExtension
 
 bl_info = {
     "name": "SHIRAKUMO_trial_extensions",

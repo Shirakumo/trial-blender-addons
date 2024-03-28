@@ -1,7 +1,4 @@
 import bpy
-import gpu
-import math
-from mathutils import Quaternion, Vector, Euler
 
 class SHIRAKUMO_trial_exporter_properties(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(
