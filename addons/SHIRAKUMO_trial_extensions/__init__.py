@@ -52,7 +52,7 @@ class GLTF_PT_SHIRAKUMO_Trial_ExportExtensionPanel(bpy.types.Panel):
         return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
 
     def draw_header(self, context):
-        props = bpy.context.scene.trial_exporter_props
+        props = bpy.context.scene.shirakumo_trial_exporter_props
         self.layout.prop(props, "enabled")
 
     def draw(self, context):
@@ -60,10 +60,8 @@ class GLTF_PT_SHIRAKUMO_Trial_ExportExtensionPanel(bpy.types.Panel):
         layout.use_property_split = True
         layout.use_property_decorate = False  # No animation.
 
-        props = bpy.context.scene.trial_exporter_props
+        props = bpy.context.scene.shirakumo_trial_exporter_props
         layout.active = props.enabled
-        layout.prop(props, "reparent_bones")
-
 
 class GLTF_PT_SHIRAKUMO_Trial_ImportExtensionPanel(bpy.types.Panel):
     bl_space_type = "FILE_BROWSER"
