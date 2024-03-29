@@ -1,25 +1,39 @@
 import bpy
+from typing import Dict
 from io_scene_gltf2.io.com import gltf2_io
 
+def group_as_dict(group: bpy.types.PropertyGroup) -> Dict:
+    prop_dict = {}
+    for key in group.__annotations__.keys():
+        prop_type = group.__annotations__[key].function
+        # Pointers to other property groups
+        if prop_type == bpy.types.PointerProperty:
+            prop_dict[key] = group_as_dict(getattr(group, key))
+        # Store collection properties as lists
+        elif prop_type == bpy.types.CollectionProperty:
+            prop_dict[key] = [group_as_dict(i) for i in getattr(group, key)]
+        # Get everything else as a value
+        else:
+            prop_dict[key] = getattr(group, key)
+    return prop_dict
+
 class glTF2ExportUserExtension:
+    name = "SHIRAKUMO_Trial"
+
     def __init__(self):
         from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
         self.Extension = Extension
         self.properties = bpy.context.scene.shirakumo_trial_exporter_props
 
-    def gather_gltf_extensions_hook(self, gltf2_plan, export_settings):
-        if not self.properties.enabled:
-            return
-
-    def gather_scene_hook(self, gltf2_scene, blender_scene, export_settings):
-        if not self.properties.enabled:
-            return
-
-    def gather_node_hook(self, gltf2_object, blender_object, export_settings):
-        if not self.properties.enabled:
-            return
-        name = "SHIRAKUMO_Trial"
-        gltf2_object.extensions[name] = self.Extension(
-            name=name,
+    def add_extension(self, gltf2_object, data):
+        if gltf2_object.extensions == None:
+            gltf2_object.extensions = {}
+        gltf2_object.extensions[self.name] = self.Extension(
+            name=self.name,
             required=False,
-            extension={})
+            extension=data)
+
+    def gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings):
+        if not self.properties.enabled:
+            return
+        self.add_extension(gltf2_animation, group_as_dict(blender_action.shirakumo_trial_extra_props))

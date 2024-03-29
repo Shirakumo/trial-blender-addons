@@ -32,9 +32,29 @@ def ensure_tracks_for_rig(obj):
     ensure_track_for_property(obj, base+".lock_target")
     ensure_track_for_property(obj, base+".lock_camera")
 
+def delete_track_for_property(obj, data_path):
+    for fcurve in obj.animation_data.action.fcurves:
+        if fcurve.data_path == data_path:
+            obj.animation_data.action.fcurves.remove(fcurve)
+            return
+
+def delete_tracks_for_rig(obj):
+    base = "data.shirakumo_trial_extra_props"
+    delete_track_for_property(obj, base+".cancelable")
+    delete_track_for_property(obj, base+".invincible")
+    delete_track_for_property(obj, base+".damage_target")
+    delete_track_for_property(obj, base+".stun_target")
+    delete_track_for_property(obj, base+".knock_target")
+    delete_track_for_property(obj, base+".lock_target")
+    delete_track_for_property(obj, base+".lock_camera")
+
 def root_motion_changed(self, context):
-    if context.object.animation_data != None and self.root_motion == True:
-        ensure_tracks_for_rig(context.object)
+    obj = context.object
+    if obj.animation_data != None:
+        if self.root_motion == True:
+            ensure_tracks_for_rig(obj)
+        else:
+            delete_tracks_for_rig(obj)
 
 class SHIRAKUMO_trial_action_properties(bpy.types.PropertyGroup):
     root_motion: bpy.props.BoolProperty(name="Root Motion", default=False, update=root_motion_changed)
