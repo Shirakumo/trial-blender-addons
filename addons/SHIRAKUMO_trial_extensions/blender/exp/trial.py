@@ -33,7 +33,24 @@ class glTF2ExportUserExtension:
             required=False,
             extension=data)
 
+    def gather_node_hook(self, gltf2_node, blender_object, export_settings):
+        if not self.properties.enabled:
+            return
+        if blender_object.type == 'ARMATURE':
+            self.add_extension(gltf2_node, group_as_dict(blender_object.data.shirakumo_trial_extra_props))
+
     def gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings):
         if not self.properties.enabled:
             return
         self.add_extension(gltf2_animation, group_as_dict(blender_action.shirakumo_trial_extra_props))
+
+    def gather_animation_channel_hook(self, gltf2_animation_channel, channel, blender_object, action_name, node_channel_is_animated, export_settings):
+        if not self.properties.enabled:
+            return
+        print(blender_object)
+
+    def gather_animation_channel_target_hook(self, gltf2_animation_channel_target, channels, blender_object, bake_bone, bake_channel, export_settings):
+        if not self.properties.enabled:
+            return
+        print(blender_object)
+
