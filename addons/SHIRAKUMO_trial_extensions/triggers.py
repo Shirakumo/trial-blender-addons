@@ -122,9 +122,9 @@ class VIEW3D_MT_triggers_add(bpy.types.Menu):
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.operator("shirakumo_trial.add_trigger", text="Trigger")
-        layout.operator("shirakumo_trial.add_spawner", text="Spawner")
-        layout.operator("shirakumo_trial.add_kill_volume", text="Kill Volume")
+        layout.operator("shirakumo_trial.add_trigger", text="Trigger", icon="SEQUENCE")
+        layout.operator("shirakumo_trial.add_spawner", text="Spawner", icon="GHOST_ENABLED")
+        layout.operator("shirakumo_trial.add_kill_volume", text="Kill Volume", icon="GHOST_DISABLED")
         
 def menu_func(self, context):
     layout = self.layout
@@ -134,10 +134,10 @@ def menu_func(self, context):
 
 class SHIRAKUMO_trial_trigger_properties(bpy.types.PropertyGroup):
     type: bpy.props.EnumProperty(name="Type", default="NONE", items=[
-        ("NONE", "None", "", 0),
+        ("NONE", "None", "SEQUENCE", 0),
         ("TRIGGER", "Trigger", "", 1),
-        ("SPAWNER", "Spawner", "", 2),
-        ("KILLVOLUME", "Kill Volume", "", 3),
+        ("SPAWNER", "Spawner", "GHOST_ENABLED", 2),
+        ("KILLVOLUME", "Kill Volume", "GHOST_DISABLED", 3),
     ])
     form: bpy.props.StringProperty(name="Lisp Form", default="")
     spawn: bpy.props.StringProperty(name="Item", default="")
@@ -173,7 +173,7 @@ class SHIRAKUMO_PT_trigger_panel(bpy.types.Panel):
             flow.column().prop(obj.shirakumo_trial_trigger_props, "spawn_count")
             flow.column().prop(obj.shirakumo_trial_trigger_props, "respawn_cooldown")
         if obj.shirakumo_trial_trigger_props.type == 'KILLVOLUME':
-            flow.column().prop(obj.shirakumo_trial_trigger_props, "type")
+            flow.column().prop(obj.shirakumo_trial_trigger_props, "kill_type")
 
 registered_classes = [
     AddTrigger,
