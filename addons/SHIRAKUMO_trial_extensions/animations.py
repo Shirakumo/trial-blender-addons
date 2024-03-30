@@ -13,12 +13,14 @@ class SHIRAKUMO_trial_importer_properties(bpy.types.PropertyGroup):
         default=True)
 
 def ensure_track_for_property(obj, data_path, interpolation="CONSTANT"):
-    for fcurve in obj.animation_data.action.fcurves:
+    action = obj.animation_data.action
+    for fcurve in action.fcurves:
         if fcurve.data_path == data_path:
             return fcurve
-    fcurve = obj.animation_data.action.fcurves.new(data_path)
-    keyframe = fcurve.keyframe_points.insert(frame=0.0, value=0.0)
-    keyframe.interpolation = interpolation
+    fcurve = action.fcurves.new(data_path)
+    range = action.frame_range
+    fcurve.keyframe_points.insert(frame=range[0], value=0.0).interpolation = interpolation
+    fcurve.keyframe_points.insert(frame=range[1], value=0.0).interpolation = interpolation
     return fcurve
 
 def ensure_tracks_for_rig(obj):
