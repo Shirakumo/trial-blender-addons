@@ -1,6 +1,7 @@
 import bpy
 from . import animations
 from . import triggers
+from . import level
 from .exporter import glTF2ExportUserExtension
 from .importer import glTF2ImportUserExtension
 
@@ -88,6 +89,7 @@ def unregister_panel():
             pass
 
 def register():
+    level.register()
     animations.register()
     triggers.register()
     register_panel()
@@ -96,6 +98,7 @@ def unregister():
     unregister_panel()
     animations.unregister()
     triggers.unregister()
+    level.unregister()
 
 if __name__ == "__main__":
     register()
