@@ -13,33 +13,35 @@ The export/import defines the ``SHIRAKUMO_trial`` extension block, which can con
 
 On rig nodes the fields are:
 
-- ``cancelable``
-- ``invincible``
-- ``targetDamage``
-- ``stunTarget``
-- ``knockTarget``
-- ``lockTarget``
-- ``lockCamera``
+- ``cancelable`` (animated) Whether the animation can be cancelled
+- ``invincible`` (animated) Whether the character is invincible
+- ``targetDamage`` (animated) How much damage to deal to the target
+- ``stunTarget`` (animated) How much stun time to add to the target
+- ``knockTarget`` (animated) Whether the target should receive knockback
+- ``lockTarget`` (animated) Whether the attack target should be locked into the place and orientation of the object named ``target``
+- ``lockCamera`` (animated) Whether the camera should be locked into the place and orientation of the object named ``camera``
 
 On object nodes set as triggers the fields are:
 
-- ``form``
-- ``spawn``
-- ``spawnCount``
-- ``autoDeactivate``
-- ``respawnCooldown``
-- ``kill``
+- ``form`` The Lisp expression to evaluate
+- ``spawn`` The object to spawn. Can either be:
+  - The name of another object in the scene
+  - A Lisp expression designating a list of the object class and the initialisation arguments
+- ``spawnCount`` The number of objects to spawn
+- ``autoDeactivate`` Whether the trigger should deactivate after all spawned objects were removed
+- ``respawnCooldown`` How much time to wait to respawn a removed object
+- ``kill`` A Lisp type expression to match which objects to remove when entering the trigger volume
 
 On animations the fields are:
 
-- ``rootMotion``
-- ``velocityScale``
-- ``loop``
-- ``next``
+- ``rootMotion`` Whether the animation should use inferred physical root motion
+- ``velocityScale`` How much to scale the physical root motion by
+- ``loop`` Whether the animation should loop or not
+- ``next`` The name of the animation to queue after this one
 
 On scenes the fields are:
 
-- ``envmap``
-- ``envmapOrientation``
-- ``envmapColor``
+- ``envmap`` The path to the hdr environment map file
+- ``envmapOrientation`` A 3-component vector designating the orientation of the environment map
+- ``envmapColor`` A 3-component color multiplier of the environment map
 
