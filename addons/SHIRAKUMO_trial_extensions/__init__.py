@@ -1,6 +1,8 @@
 import bpy
-from .blender.com import trial_ui
-from .blender.exp.trial import glTF2ExportUserExtension
+from . import animations
+from . import triggers
+from .exp import glTF2ExportUserExtension
+from .imp import glTF2ImportUserExtension
 
 bl_info = {
     "name": "SHIRAKUMO_trial_extensions",
@@ -14,29 +16,6 @@ bl_info = {
     "tracker_url": "https://github.com/shirakumo/trial-blender-addons/issues",
     "url": "https://github.com/shirakumo/trial-blender-addons",
 }
-
-def register():
-    trial_ui.register()
-
-def unregister():
-    unregister_panel()
-    trial_ui.unregister()
-
-def register_panel():
-    try:
-        bpy.utils.register_class(GLTF_PT_SHIRAKUMO_Trial_ImportExtensionPanel)
-        bpy.utils.register_class(GLTF_PT_SHIRAKUMO_Trial_ExportExtensionPanel)
-    except Exception:
-        pass
-    return unregister_panel
-
-def unregister_panel():
-    for p in (GLTF_PT_SHIRAKUMO_Trial_ExportExtensionPanel,
-              GLTF_PT_SHIRAKUMO_Trial_ImportExtensionPanel):
-        try:
-            bpy.utils.unregister_class(p)
-        except Exception:
-            pass
 
 class GLTF_PT_SHIRAKUMO_Trial_ExportExtensionPanel(bpy.types.Panel):
     bl_space_type = "FILE_BROWSER"
@@ -87,3 +66,36 @@ class GLTF_PT_SHIRAKUMO_Trial_ImportExtensionPanel(bpy.types.Panel):
 
         props = bpy.context.scene.shirakumo_trial_importer_props
         layout.active = props.enabled
+
+registered_classes = [
+    GLTF_PT_SHIRAKUMO_Trial_ImportExtensionPanel,
+    GLTF_PT_SHIRAKUMO_Trial_ExportExtensionPanel,
+]
+
+def register_panel():
+    for p in registered_classes:
+        try:
+            bpy.utils.register_class(p)
+        except Exception:
+            pass
+    return unregister_panel
+
+def unregister_panel():
+    for p in registered_classes:
+        try:
+            bpy.utils.unregister_class(p)
+        except Exception:
+            pass
+
+def register():
+    animations.register()
+    triggers.register()
+    register_panel()
+
+def unregister():
+    unregister_panel()
+    animations.unregister()
+    triggers.unregister()
+
+if __name__ == "__main__":
+    register()
