@@ -11,7 +11,7 @@ Activating the plugin should give you a new menu entry under ``Add`` to create t
 ## JSON Schema
 The export/import defines the ``SHIRAKUMO_trial`` extension block, which can contain different fields depending on the type of node it is attached to.
 
-Specifically, on rig nodes the fields are:
+On rig nodes the fields are:
 
 - ``cancelable``
 - ``invincible``
@@ -36,3 +36,10 @@ On animations the fields are:
 - ``velocityScale``
 - ``loop``
 - ``next``
+
+On scenes the fields are:
+
+- ``envmap``
+- ``envmapOrientation``
+- ``envmapColor``
+

@@ -33,10 +33,29 @@ class glTF2ExportUserExtension:
         for (name, val, default) in args:
             if val != default:
                 props[name] = val
-        gltf2_object.extensions[self.name] = self.Extension(
-            name=self.name,
-            required=False,
-            extension=props)
+        
+        if props != {}:
+            gltf2_object.extensions[self.name] = self.Extension(
+                name=self.name,
+                required=False,
+                extension=props)
+
+    def gather_scene_hook(self, gltf2_node, blender_object, export_settings):
+        if not self.properties.enabled:
+            return
+        bg = blender_object.world.node_tree.nodes['Background']
+        if bg:
+            intensity = bg.inputs[1].default_value
+            texture = bg.inputs[0].links[0].from_node
+            orientation = None
+            if 0 < len(texture.inputs[0].links):
+                orientation = [x for x in texture.inputs[0].links[0].from_socket.default_value]
+            if texture.image and texture.image.filepath:
+                self.add_extension(gltf2_node,
+                                   ("envmap", texture.image.filepath, None),
+                                   ("envmapColor", [intensity,intensity,intensity], [1.0,1.0,1.0]),
+                                   ("envmapOrientation", orientation, None))
+            
 
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
         if not self.properties.enabled:
