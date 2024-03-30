@@ -1,0 +1,27 @@
+name: Build Release
+on: [create, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+      - name: Build
+        run: |
+          cd addons/
+          cp ../LICENSE SHIRAKUMO_trial_extensions/
+          zip -r ../SHIRAKUMO_trial_extensions.zip . -x 'SHIRAKUMO_trial_extensions/__pycache__/*'
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trial-blender-addons
+          path: SHIRAKUMO_trial_extensions.zip
+      - name: Create release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        continue-on-error: true
+        with:
+          allowUpdates: true
+          name: Release ${{ github.ref_name }}
+          artifacts: SHIRAKUMO_trial_extensions.zip
