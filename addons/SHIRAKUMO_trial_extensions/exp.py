@@ -25,25 +25,55 @@ class glTF2ExportUserExtension:
         self.Extension = Extension
         self.properties = bpy.context.scene.shirakumo_trial_exporter_props
 
-    def add_extension(self, gltf2_object, data):
+    def add_extension(self, gltf2_object, *args):
         if gltf2_object.extensions == None:
             gltf2_object.extensions = {}
+        
+        props = {}
+        for (name, val, default) in args:
+            if val != default:
+                props[name] = val
         gltf2_object.extensions[self.name] = self.Extension(
             name=self.name,
             required=False,
-            extension=data)
+            extension=props)
 
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
         if not self.properties.enabled:
             return
-        if blender_object.type == 'ARMATURE':
-            self.add_extension(gltf2_node, group_as_dict(blender_object.data.shirakumo_trial_extra_props))
-        if blender_object.type == 'OBJECT' and blender_object.shirakumo_trial_trigger_props.type != 'NONE':
-            self.add_extension(gltf2_node, group_as_dict(blender_object.data.shirakumo_trial_trigger_props))
+        if blender_object.type == "ARMATURE":
+            props = blender_object.data.shirakumo_trial_extra_props
+            self.add_extension(gltf2_node,
+                               ("cancelable", True, None),
+                               ("invincible", False, None),
+                               ("targetDamage", 0.0, None),
+                               ("stunTarget", 0.0, None),
+                               ("knockTarget", False, None),
+                               ("lockTarget", False, None),
+                               ("lockCamera", False, None))
+        elif blender_object.type == "OBJECT":
+            props = blender_object.shirakumo_trial_trigger_props
+            if props.type == "TRIGGER":
+                self.add_extension(gltf2_node,
+                                   ("form", props.form, None))
+            if props.type == "SPAWNER":
+                self.add_extension(gltf2_node,
+                                   ("spawn", props.spawn, None),
+                                   ("spawnCount", props.spawn_count, 1),
+                                   ("autoDeactivate", props.auto_deactivate, True),
+                                   ("respawnCooldown", props.respawn_cooldown, 0.0))
+            if props.type == "KILLVOLUME":
+                self.add_extension(gltf2_node,
+                                   ("kill", props.kill_type, None))
 
     def gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings):
         if not self.properties.enabled:
             return
-        self.add_extension(gltf2_animation, group_as_dict(blender_action.shirakumo_trial_extra_props))
+        props = blender_action.shirakumo_trial_extra_props
+        self.add_extension(gltf2_animation,
+                           ("rootMotion", props.root_motion, False),
+                           ("velocityScale", props.velocity_scale, 1.0),
+                           ("loop", props.loop_animation, True),
+                           ("next", props.next_animation, ""))
 
 
