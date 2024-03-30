@@ -1,8 +1,8 @@
 import bpy
 from . import animations
 from . import triggers
-from .exp import glTF2ExportUserExtension
-from .imp import glTF2ImportUserExtension
+from .exporter import glTF2ExportUserExtension
+from .importer import glTF2ImportUserExtension
 
 bl_info = {
     "name": "SHIRAKUMO_trial_extensions",
