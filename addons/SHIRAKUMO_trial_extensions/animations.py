@@ -80,7 +80,7 @@ class SHIRAKUMO_PT_trial_action_panel(bpy.types.Panel):
     bl_region_type = "UI"
     bl_context = "animation"
     def draw(self, context):
-        if context.object.animation_data == None:
+        if context.object.animation_data == None or context.object.animation_data.action == None:
             return
         layout = self.layout
         layout.use_property_split = True
