@@ -1,5 +1,26 @@
 import bpy
 
+def push_selection(new):
+    previous_selected = []
+    for obj in bpy.context.selected_objects:
+        previous_selected.push(obj)
+        obj.select_set(False)
+    for obj in new:
+        obj.select_set(True)
+    return previous_selected
+
+class Selection(object):
+    def __init__(self, new=[]):
+        self.previous = []
+        self.new = new
+        
+    def __enter__(self):
+        self.previous = push_selection(self.new)
+        return self
+    
+    def __exit__(self, *args):
+        push_selection(self.previous)
+
 def hide_all(filter):
     for obj in bpy.data.objects:
         if obj.type == 'MESH':
@@ -13,15 +34,13 @@ def rebake(obj):
     else:
         hide_all(lambda obj : True)
         obj.hide_render = False
-    
-    previous_selected = bpy.context.selected_objects
-    obj.select_set(True)
-    bpy.ops.object.mode_set(mode='EDIT')
-    bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.uv.smart_project(island_margin=0.001)
-    bpy.ops.object.mode_set(mode='OBJECT')
-    bpy.ops.object.bake(type='AO', use_clear=True)
-    bpy.context.selected_objects = previous_selected
+
+    with Selection([obj]) as sel:
+        bpy.ops.object.mode_set(mode='EDIT')
+        bpy.ops.mesh.select_all(action='SELECT')
+        bpy.ops.uv.smart_project(island_margin=0.001)
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.bake(type='AO', use_clear=True)
 
 def rebake_all():
     for obj in bpy.data.objects:
