@@ -6,17 +6,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v2
-      - name: Build
+        uses: actions/checkout@v4
+        with:
+          path: trial
+      - name: Checkout gltf physics
+        uses: actions/checkout@v4
+        with:
+          repository: eoineoineoin/glTF_Physics_Blender_Exporter
+          path: gltf_physics
+      - name: Build ZIP files
         run: |
-          cd addons/
-          cp ../LICENSE SHIRAKUMO_trial_extensions/
-          zip -r ../SHIRAKUMO_trial_extensions.zip . -x 'SHIRAKUMO_trial_extensions/__pycache__/*'
+          cd $GITHUB_WORKSPACE/trial/addons/
+          cp ../LICENSE */
+          zip -r $GITHUB_WORKSPACE/SHIRAKUMO_trial_extensions.zip .
+          cd $GITHUB_WORKSPACE/gltf_physics/addons/
+          cp ../LICENSE.txt */
+          zip -r $GITHUB_WORKSPACE/KHR_physics_rigid_bodies.zip .
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: trial-blender-addons
-          path: SHIRAKUMO_trial_extensions.zip
+          path: |
+            SHIRAKUMO_trial_extensions.zip
+            KHR_physics_rigid_bodies.zip
       - name: Create release
         id: create_release
         uses: ncipollo/release-action@v1
@@ -24,4 +36,6 @@ jobs:
         with:
           allowUpdates: true
           name: Release ${{ github.ref_name }}
-          artifacts: SHIRAKUMO_trial_extensions.zip
+          artifacts: |
+            SHIRAKUMO_trial_extensions.zip
+            KHR_physics_rigid_bodies.zip
