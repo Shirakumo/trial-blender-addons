@@ -2,9 +2,7 @@
 This is a repository that contains addons for Blender specifically for creating models and levels for use with the [Trial engine](https://shirakumo.org/projects/trial).
 
 ## Installation
-First you will need the [glTF Physics Exporter](https://github.com/eoineoineoin/glTF_Physics_Blender_Exporter) plugin, as Trial depends on its capabilities for physics.
-
-Then you can [download the latest release](https://github.com/Shirakumo/trial-blender-addons/releases/latest/download/SHIRAKUMO_trial_extensions.zip) of our plugin directly here from GitHub. The zip files can be imported into Blender just like any other addon.
+Then you can [download the latest release](https://github.com/Shirakumo/trial-blender-addons/releases/latest/) of our plugin and the dependent ``KHR_physics_rigid_bodies`` directly here from GitHub. The zip files can be imported into Blender just like any other addon.
 
 Activating the plugin should give you a new menu entry under ``Add`` to create trigger volumes, as well as new action properties specific to Trial. Finally, it hooks into the glTF2 plugin to properly export and import the extra data.
 
