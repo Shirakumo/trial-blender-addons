@@ -44,12 +44,12 @@ def rebake(obj):
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.uv.smart_project(island_margin=0.001)
         bpy.ops.object.mode_set(mode='OBJECT')
-        bpy.ops.object.bake(type='AO', use_clear=True)
+        bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', use_clear=True)
 
 class SteppedOperator(bpy.types.Operator):
     def __init__(self):
         self.steps = []
-        self.index = 0
+        self.index = -1
         self.timer = None
         self.timer_count = 0
 
@@ -64,11 +64,11 @@ class SteppedOperator(bpy.types.Operator):
             self.timer_count += 1
             if 10 <= self.timer_count and not bpy.app.is_job_running('OBJECT_BAKE'):
                 self.timer_count = 0
+                self.index += 1
                 if self.index < len(self.steps):
                     self.steps[self.index]()
-                    self.index += 1
         
-        context.object.shirakumo_operator_progress = float(self.index)/len(self.steps)
+        context.object.shirakumo_operator_progress = float(max(0,self.index))/len(self.steps)
         context.area.tag_redraw()
         return {'RUNNING_MODAL'}
 
@@ -115,7 +115,9 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     
     def prepare(self, context):
         path = Path(bpy.data.filepath).with_suffix('.glb')
-        self.steps.append(lambda : bpy.ops.export_scene.gltf(str(path), check_existing=False))
+        self.steps.append(lambda : bpy.ops.export_scene.gltf(
+            filepath=str(path),
+            check_existing=False))
 
 class SHIRAKUMO_TRIAL_PT_bake_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_bake_panel"
