@@ -21,14 +21,17 @@ On rig nodes the fields are:
 
 On object nodes set as triggers the fields are:
 
-- ``form`` The Lisp expression to evaluate
-- ``spawn`` The object to spawn. Can either be:
-  - The name of another object in the scene
-  - A Lisp expression designating a list of the object class and the initialisation arguments
-- ``spawnCount`` The number of objects to spawn
-- ``autoDeactivate`` Whether the trigger should deactivate after all spawned objects were removed
-- ``respawnCooldown`` How much time to wait to respawn a removed object
-- ``kill`` A Lisp type expression to match which objects to remove when entering the trigger volume
+- ``trigger``
+  - ``form`` The Lisp expression to evaluate
+- ``spawner``
+  - ``spawn`` The object to spawn. Can either be:
+    - The name of another object in the scene
+    - A Lisp expression designating a list of the object class and the initialisation arguments
+  - ``spawnCount`` The number of objects to spawn
+  - ``autoDeactivate`` Whether the trigger should deactivate after all spawned objects were removed
+  - ``respawnCooldown`` How much time to wait to respawn a removed object
+- ``killvolume``
+  - ``kill`` A Lisp type expression to match which objects to remove when entering the trigger volume
 
 On animations the fields are:
 
