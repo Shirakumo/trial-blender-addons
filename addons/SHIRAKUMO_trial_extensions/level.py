@@ -28,9 +28,12 @@ def hide_all(filter):
             obj.hide_render = filter(obj)
 
 def is_bakable_obj(obj):
-    return obj.type == 'MESH' and obj.active_material
+    return (obj.type == 'MESH' and
+            (not obj.khr_physics_extra_props or
+             not obj.khr_physics_extra_props.is_trigger))
 
 def rebake(obj):
+    print("Rebake "+str(obj))
     ## If we have a level object, hide everything but other level objects
     if obj.khr_physics_extra_props.infinite_mass:
         hide_all(lambda obj : not obj.khr_physics_extra_props.infinite_mass)
@@ -40,6 +43,11 @@ def rebake(obj):
         obj.hide_render = False
 
     with Selection([obj]) as sel:
+        if not obj.data.materials:
+            mat = bpy.data.materials.new(name="AO_Material")
+            ## TODO: create AO texture and such.
+            obj.data.materials.append(mat)
+        
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.uv.smart_project(island_margin=0.001)
@@ -93,7 +101,8 @@ class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
     
     def prepare(self, context):
         for obj in context.selected_objects:
-            self.steps.append(lambda : rebake(obj))
+            if is_bakable_object(obj):
+                self.steps.append(lambda : rebake(obj))
 
 class SHIRAKUMO_TRIAL_OT_rebake_all(SteppedOperator):
     bl_idname = "shirakumo_trial.rebake_all"
@@ -105,8 +114,7 @@ class SHIRAKUMO_TRIAL_OT_rebake_all(SteppedOperator):
     
     def prepare(self, context):
         for obj in bpy.data.objects:
-            if obj.type == 'MESH' and (not context.object.rigid_body or
-                                       not context.object.khr_physics_extra_props.is_trigger):
+            if is_bakable_object(obj):
                 self.steps.append(lambda : rebake(obj))
 
 class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
