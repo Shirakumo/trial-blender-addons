@@ -5,9 +5,12 @@ from io_scene_gltf2.io.com import gltf2_io
 def args_dict(*args):
     props = {}
     for arg in args:
-        if ((len(arg) == 2 and arg[1] != None) or
-            (len(arg) == 3 and arg[1] != arg[2])):
-            props[arg[0]] = arg[1]
+        if len(arg) == 2:
+            if arg[1] != None:
+                props[arg[0]] = arg[1]
+        elif len(arg) == 3:
+            if arg[1] != arg[2]:
+                props[arg[0]] = arg[1]
     return props
 
 class glTF2ExportUserExtension:
