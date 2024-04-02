@@ -1,4 +1,5 @@
 import bpy
+from pathlib import Path
 
 def push_selection(new):
     previous_selected = []
@@ -113,7 +114,8 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     bl_label = "ReExport"
     
     def prepare(self, context):
-        self.steps.append(lambda : bpy.ops.export_scene.gltf(check_existing=False))
+        path = Path(bpy.data.filepath).with_suffix('.glb')
+        self.steps.append(lambda : bpy.ops.export_scene.gltf(str(path), check_existing=False))
 
 class SHIRAKUMO_TRIAL_PT_bake_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_bake_panel"
