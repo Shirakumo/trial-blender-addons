@@ -2,20 +2,13 @@ import bpy
 from typing import Dict
 from io_scene_gltf2.io.com import gltf2_io
 
-def group_as_dict(group: bpy.types.PropertyGroup) -> Dict:
-    prop_dict = {}
-    for key in group.__annotations__.keys():
-        prop_type = group.__annotations__[key].function
-        # Pointers to other property groups
-        if prop_type == bpy.types.PointerProperty:
-            prop_dict[key] = group_as_dict(getattr(group, key))
-        # Store collection properties as lists
-        elif prop_type == bpy.types.CollectionProperty:
-            prop_dict[key] = [group_as_dict(i) for i in getattr(group, key)]
-        # Get everything else as a value
-        else:
-            prop_dict[key] = getattr(group, key)
-    return prop_dict
+def args_dict(*args):
+    props = {}
+    for arg in args:
+        if ((len(arg) == 2 and arg[1] != None) or
+            (len(arg) == 3 and arg[1] != arg[2])):
+            props[arg[0]] = arg[1]
+    return props
 
 class glTF2ExportUserExtension:
     name = "SHIRAKUMO_Trial"
@@ -29,11 +22,7 @@ class glTF2ExportUserExtension:
         if gltf2_object.extensions == None:
             gltf2_object.extensions = {}
         
-        props = {}
-        for (name, val, default) in args:
-            if val != default:
-                props[name] = val
-        
+        props = args_dict(*args)
         if props != {}:
             gltf2_object.extensions[self.name] = self.Extension(
                 name=self.name,
@@ -52,9 +41,9 @@ class glTF2ExportUserExtension:
                 orientation = [x for x in texture.inputs[0].links[0].from_socket.default_value]
             if texture.image and texture.image.filepath:
                 self.add_extension(gltf2_node,
-                                   ("envmap", texture.image.filepath, None),
+                                   ("envmap", texture.image.filepath),
                                    ("envmapColor", [intensity,intensity,intensity], [1.0,1.0,1.0]),
-                                   ("envmapOrientation", orientation, None))
+                                   ("envmapOrientation", orientation))
             
 
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
@@ -63,27 +52,30 @@ class glTF2ExportUserExtension:
         if blender_object.type == "ARMATURE":
             props = blender_object.data.shirakumo_trial_extra_props
             self.add_extension(gltf2_node,
-                               ("cancelable", True, None),
-                               ("invincible", False, None),
-                               ("targetDamage", 0.0, None),
-                               ("stunTarget", 0.0, None),
-                               ("knockTarget", False, None),
-                               ("lockTarget", False, None),
-                               ("lockCamera", False, None))
+                               ("cancelable", True),
+                               ("invincible", False),
+                               ("targetDamage", 0.0),
+                               ("stunTarget", 0.0),
+                               ("knockTarget", False),
+                               ("lockTarget", False),
+                               ("lockCamera", False))
         elif blender_object.type == "OBJECT":
             props = blender_object.shirakumo_trial_trigger_props
             if props.type == "TRIGGER":
                 self.add_extension(gltf2_node,
-                                   ("form", props.form, None))
+                                   ("trigger", args_dict(
+                                       ("form": props.form))))
             if props.type == "SPAWNER":
                 self.add_extension(gltf2_node,
-                                   ("spawn", props.spawn, None),
-                                   ("spawnCount", props.spawn_count, 1),
-                                   ("autoDeactivate", props.auto_deactivate, True),
-                                   ("respawnCooldown", props.respawn_cooldown, 0.0))
+                                   ("spawner", args_dict(
+                                       ("spawn", props.spawn),
+                                       ("spawnCount", props.spawn_count, 1),
+                                       ("autoDeactivate", props.auto_deactivate, True),
+                                       ("respawnCooldown", props.respawn_cooldown, 0.0)))
             if props.type == "KILLVOLUME":
                 self.add_extension(gltf2_node,
-                                   ("kill", props.kill_type, None))
+                                   ("killvolume", args_dict(
+                                       ("kill": props.kill_type))))
 
     def gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings):
         if not self.properties.enabled:
