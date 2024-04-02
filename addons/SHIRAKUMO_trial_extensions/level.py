@@ -108,19 +108,11 @@ class SHIRAKUMO_TRIAL_OT_rebake_all(SteppedOperator):
                                        not context.object.khr_physics_extra_props.is_trigger):
                 self.steps.append(lambda : rebake(obj))
 
-class SHIRAKUMO_TRIAL_OT_rebake_and_export(SteppedOperator):
-    bl_idname = "shirakumo_trial.rebake_and_export"
-    bl_label = "ReBake Selected"
-    
-    @classmethod
-    def poll(cls, context):
-        if context.object.shirakumo_operator_progress < 0: return True
+class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
+    bl_idname = "shirakumo_trial.reexport"
+    bl_label = "ReExport"
     
     def prepare(self, context):
-        for obj in bpy.data.objects:
-            if obj.type == 'MESH' and (not context.object.rigid_body or
-                                       not context.object.khr_physics_extra_props.is_trigger):
-                self.steps.append(lambda : rebake(obj))
         self.steps.append(lambda : bpy.ops.export_scene.gltf(check_existing=False))
 
 class SHIRAKUMO_TRIAL_PT_bake_panel(bpy.types.Panel):
@@ -139,12 +131,12 @@ class SHIRAKUMO_TRIAL_PT_bake_panel(bpy.types.Panel):
         else:
             layout.column().operator("shirakumo_trial.rebake", text="ReBake Selected")
             layout.column().operator("shirakumo_trial.rebake_all", text="ReBake All")
-            layout.column().operator("shirakumo_trial.rebake_and_export", text="ReBake & Export")
+            layout.column().operator("shirakumo_trial.reexport", text="ReExport")
 
 registered_classes = [
     SHIRAKUMO_TRIAL_OT_rebake,
     SHIRAKUMO_TRIAL_OT_rebake_all,
-    SHIRAKUMO_TRIAL_OT_rebake_and_export,
+    SHIRAKUMO_TRIAL_OT_reexport,
     SHIRAKUMO_TRIAL_PT_bake_panel,
 ]
 
