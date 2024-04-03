@@ -78,6 +78,18 @@ def rebake(obj):
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', use_clear=True)
 
+def export_single_object(obj):
+    ensure_physics_obj(obj)
+    rebake(obj)
+    # Create a virtual scene to export the single object
+    bpy.ops.scene.new(type='EMPTY')
+    bpy.context.scene.objects.link(obj)
+    bpy.ops.export_scene.gltf(
+        filepath=str(path),
+        check_existing=False,
+        use_active_scene=True)
+    bpy.ops.scene.delete()
+
 class SteppedOperator(bpy.types.Operator):
     def __init__(self):
         self.steps = []
