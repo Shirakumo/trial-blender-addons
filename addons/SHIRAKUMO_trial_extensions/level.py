@@ -1,4 +1,5 @@
 import bpy
+import bmesh
 from pathlib import Path
 
 def push_selection(new):
@@ -32,22 +33,45 @@ def is_bakable_obj(obj):
             (not obj.khr_physics_extra_props or
              not obj.khr_physics_extra_props.is_trigger))
 
+def object_surface_area(obj):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    size = sum(f.calc_area() for f in bm.faces)
+    bm.free()
+    return size
+
+def ensure_ao_material(obj, size=None):
+    if not size:
+        size = int(100*sqrt(object_surface_area(obj)))
+
+    if not obj.data.materials:
+        mat = bpy.data.materials.new(name="AO_Material")
+        mat.use_nodes = True
+        obj.data.materials.append(ma)
+    
+    mat = obj.data.materials[0]
+    bsdf = mat.node_tree.nodes.get('Principled BSDF')
+    if not bsdf.inputs['Base Color']:
+        tex = bpy.data.textures.new("AO", type='IMAGE')
+        tex.image = bpy.data.images.new("AO", size, size)
+        mat.texture_slots.add().texture = tex
+        mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
+
+def ensure_physics_obj(obj):
+    if not obj.rigid_body:
+        with Selection([obj]) as sel:
+            bpy.ops.rigidbody.objects_add()
+
 def rebake(obj):
     print("Rebake "+str(obj))
-    ## If we have a level object, hide everything but other level objects
     if obj.khr_physics_extra_props.infinite_mass:
         hide_all(lambda obj : not obj.khr_physics_extra_props.infinite_mass)
-    ## Otherwise hide everything but this object
     else:
         hide_all(lambda obj : True)
         obj.hide_render = False
 
     with Selection([obj]) as sel:
-        if not obj.data.materials:
-            mat = bpy.data.materials.new(name="AO_Material")
-            ## TODO: create AO texture and such.
-            obj.data.materials.append(mat)
-        
+        ensure_ao_material(obj)
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.uv.smart_project(island_margin=0.001)
