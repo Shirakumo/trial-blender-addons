@@ -180,9 +180,9 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
             filepath=str(path),
             check_existing=False))
 
-class SHIRAKUMO_TRIAL_PT_bake_panel(bpy.types.Panel):
-    bl_idname = "SHIRAKUMO_TRIAL_PT_bake_panel"
-    bl_label = "Rebake"
+class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
+    bl_idname = "SHIRAKUMO_TRIAL_PT_edit_panel"
+    bl_label = "Trial Extensions"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "Edit"
@@ -202,7 +202,7 @@ registered_classes = [
     SHIRAKUMO_TRIAL_OT_rebake,
     SHIRAKUMO_TRIAL_OT_rebake_all,
     SHIRAKUMO_TRIAL_OT_reexport,
-    SHIRAKUMO_TRIAL_PT_bake_panel,
+    SHIRAKUMO_TRIAL_PT_edit_panel,
 ]
 
 def register():

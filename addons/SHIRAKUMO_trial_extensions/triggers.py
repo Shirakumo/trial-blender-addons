@@ -147,7 +147,7 @@ class SHIRAKUMO_TRIAL_trigger_properties(bpy.types.PropertyGroup):
 
 class SHIRAKUMO_TRIAL_PT_trigger_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_trigger_panel"
-    bl_label = "Trial Trigger Extensions"
+    bl_label = "Trial Extensions"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "physics"
