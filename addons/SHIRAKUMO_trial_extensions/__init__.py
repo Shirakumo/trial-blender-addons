@@ -10,7 +10,7 @@ from .importer import glTF2ImportUserExtension
 bl_info = {
     "name": "SHIRAKUMO_trial_extensions",
     "version": (0, 0, 1),
-    "blender": (3, 6, 0),
+    "blender": (4, 0, 0),
     "isDraft": True,
     "developer": "Yukari Hafner",
     "category": "Import-Export",
