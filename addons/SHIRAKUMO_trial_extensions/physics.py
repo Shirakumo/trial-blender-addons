@@ -144,6 +144,7 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
     spawn_count: bpy.props.IntProperty(name="Spawn Count", default=1, min=1)
     respawn_cooldown: bpy.props.FloatProperty(name="Respawn Cooldown", default=0.0, min=0.0)
     auto_deactivate: bpy.props.BoolProperty(name="Auto-Deactivate", default=True)
+    virtual: bpy.props.BoolProperty(name="Virtual", default=False)
 
 class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
@@ -154,7 +155,7 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
     
     @classmethod
     def poll(cls, context):
-        if context.object and context.object.rigid_body and context.object.khr_physics_extra_props.is_trigger:
+        if context.object and context.object.rigid_body:
             return True
         return None
 
@@ -164,16 +165,19 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
         layout.use_property_split = True
         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
 
-        flow.column().prop(obj.shirakumo_trial_physics_props, "type")
-        if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "form")
-        if obj.shirakumo_trial_physics_props.type == 'SPAWNER':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
-        if obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
+        if context.object.khr_physics_extra_props.is_trigger:
+            flow.column().prop(obj.shirakumo_trial_physics_props, "type")
+            if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "form")
+            if obj.shirakumo_trial_physics_props.type == 'SPAWNER':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
+            if obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
+        else:
+            flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
 
 registered_classes = [
     SHIRAKUMO_TRIAL_OT_add_trigger,

@@ -19,8 +19,9 @@ On rig nodes the fields are:
 - ``lockTarget`` (animated) Whether the attack target should be locked into the place and orientation of the object named ``target``
 - ``lockCamera`` (animated) Whether the camera should be locked into the place and orientation of the object named ``camera``
 
-On object nodes set as triggers the fields are:
+On object nodes set as physics objects the fields are:
 
+- ``virtual`` If true the object should not be rendered but still participate in collisions
 - ``trigger``
   - ``form`` The Lisp expression to evaluate
 - ``spawner``
