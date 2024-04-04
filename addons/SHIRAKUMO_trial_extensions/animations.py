@@ -1,17 +1,5 @@
 import bpy
 
-class SHIRAKUMO_TRIAL_exporter_properties(bpy.types.PropertyGroup):
-    enabled: bpy.props.BoolProperty(
-        name="SHIRAKUMO_TRIAL_extensions",
-        description="Include Trial-specific extensions",
-        default=True)
-
-class SHIRAKUMO_TRIAL_importer_properties(bpy.types.PropertyGroup):
-    enabled: bpy.props.BoolProperty(
-        name="SHIRAKUMO_TRIAL_extensions",
-        description="Include Trial-specific extensions",
-        default=True)
-
 def ensure_track_for_property(obj, data_path, interpolation="CONSTANT"):
     action = obj.animation_data.action
     for fcurve in action.fcurves:
@@ -92,8 +80,6 @@ class SHIRAKUMO_TRIAL_PT_action_panel(bpy.types.Panel):
         flow.column().prop(obj.shirakumo_trial_extra_props, "next_animation")
 
 registered_classes = [
-    SHIRAKUMO_TRIAL_exporter_properties,
-    SHIRAKUMO_TRIAL_importer_properties,
     SHIRAKUMO_TRIAL_action_properties,
     SHIRAKUMO_TRIAL_armature_properties,
     SHIRAKUMO_TRIAL_PT_action_panel,
@@ -106,15 +92,9 @@ def register():
         type=SHIRAKUMO_TRIAL_action_properties)
     bpy.types.Armature.shirakumo_trial_extra_props = bpy.props.PointerProperty(
         type=SHIRAKUMO_TRIAL_armature_properties)
-    bpy.types.Scene.shirakumo_trial_exporter_props = bpy.props.PointerProperty(
-        type=SHIRAKUMO_TRIAL_exporter_properties)
-    bpy.types.Scene.shirakumo_trial_importer_props = bpy.props.PointerProperty(
-        type=SHIRAKUMO_TRIAL_importer_properties)
 
 def unregister():
     for cls in registered_classes:
         bpy.utils.unregister_class(cls)
     del bpy.types.Action.shirakumo_trial_extra_props
     del bpy.types.Armature.shirakumo_trial_extra_props
-    del bpy.types.Scene.shirakumo_trial_exporter_props
-    del bpy.types.Scene.shirakumo_trial_importer_props
