@@ -83,7 +83,7 @@ class SHIRAKUMO_TRIAL_OT_add_spawner(GenericTrigger):
     respawn_cooldown: bpy.props.FloatProperty(
         name="Respawn Cooldown",
         description="The number of seconds to wait between the last item was removed before respawning",
-        default=0.0)
+        default=0.0, min=0.0, unit='TIME')
 
     def customize_object(self, obj):
         obj.shirakumo_trial_physics_props.type = 'SPAWNER'
@@ -133,18 +133,40 @@ def menu_func(self, context):
     layout.menu("SHIRAKUMO_TRIAL_MT_triggers_add", text="Triggers", icon="DECORATE")
 
 class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
-    type: bpy.props.EnumProperty(name="Type", default="NONE", items=[
-        ("NONE", "None", "SEQUENCE", 0),
-        ("TRIGGER", "Trigger", "", 1),
-        ("SPAWNER", "Spawner", "GHOST_ENABLED", 2),
-        ("KILLVOLUME", "Kill Volume", "GHOST_DISABLED", 3),
-    ])
-    form: bpy.props.StringProperty(name="Lisp Form", default="")
-    spawn: bpy.props.StringProperty(name="Item", default="")
-    spawn_count: bpy.props.IntProperty(name="Spawn Count", default=1, min=1)
-    respawn_cooldown: bpy.props.FloatProperty(name="Respawn Cooldown", default=0.0, min=0.0)
-    auto_deactivate: bpy.props.BoolProperty(name="Auto-Deactivate", default=True)
-    virtual: bpy.props.BoolProperty(name="Virtual", default=False)
+    type: bpy.props.EnumProperty(
+        name="Type",
+        default="NONE",
+        description="The type of trigger volume this object is",
+        items=[
+            ("NONE", "None", "SEQUENCE", 0),
+            ("TRIGGER", "Trigger", "", 1),
+            ("SPAWNER", "Spawner", "GHOST_ENABLED", 2),
+            ("KILLVOLUME", "Kill Volume", "GHOST_DISABLED", 3),
+        ])
+    form: bpy.props.StringProperty(
+        name="Lisp Form",
+        default="",
+        description="The Lisp form to evaluate when the trigger is hit")
+    spawn: bpy.props.StringProperty(
+        name="Item",
+        default="",
+        description="A Lisp form identifying the item to spawn")
+    spawn_count: bpy.props.IntProperty(
+        name="Spawn Count",
+        default=1, min=1,
+        description="The number of items to spawn")
+    respawn_cooldown: bpy.props.FloatProperty(
+        name="Respawn Cooldown",
+        default=0.0, min=0.0, unit='TIME',
+        description="The number of seconds to wait between a spawned item being removed and it being respawned")
+    auto_deactivate: bpy.props.BoolProperty(
+        name="Auto-Deactivate",
+        default=True,
+        description="Whether the trigger should deactivate itself when all its spawned items have been removed")
+    virtual: bpy.props.BoolProperty(
+        name="Virtual",
+        default=False,
+        description="If true the object won't be visible, but will be participating in physics interactions")
 
 class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
