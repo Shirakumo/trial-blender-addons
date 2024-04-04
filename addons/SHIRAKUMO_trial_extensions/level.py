@@ -29,11 +29,15 @@ class Selection(object):
 def hide_all(filter):
     for obj in bpy.data.objects:
         if obj.type == 'MESH':
-            obj.hide_render = filter(obj)
+            if filter(obj):
+                obj.hide_render = True
+            else:
+                obj.hide_render = False
 
 def is_bakable_object(obj):
     return (obj.type == 'MESH' and
-            (not obj.khr_physics_extra_props or
+            (not obj.rigid_body or
+             not obj.khr_physics_extra_props or
              not obj.khr_physics_extra_props.is_trigger))
 
 def object_surface_area(obj):
