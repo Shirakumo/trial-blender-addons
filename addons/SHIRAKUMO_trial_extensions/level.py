@@ -48,9 +48,6 @@ def object_surface_area(obj):
     return size
 
 def ensure_ao_material(obj, size=None, resize=False):
-    if not size:
-        size = int(ao_map_resolution*sqrt(object_surface_area(obj)))
-
     if not obj.data.materials:
         mat = bpy.data.materials.new(name="AO_Material")
         mat.use_nodes = True
@@ -59,13 +56,18 @@ def ensure_ao_material(obj, size=None, resize=False):
     mat = obj.data.materials[0]
     bsdf = mat.node_tree.nodes.get('Principled BSDF')
     if not bsdf.inputs['Base Color'].links:
+        if not size:
+            size = int(ao_map_resolution*sqrt(object_surface_area(obj)))
         tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
         tex.image = bpy.data.images.new("AO", size, size)
         mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
 
     img = bsdf.inputs['Base Color'].links[0].from_node.image
-    if resize and img.size[0] != size:
-        img.scale(size, size)
+    if resize:
+        if not size:
+            size = int(ao_map_resolution*sqrt(object_surface_area(obj)))
+        if img.size[0] != size:
+            img.scale(size, size)
 
 def ensure_physics_obj(obj):
     if not obj.rigid_body:
