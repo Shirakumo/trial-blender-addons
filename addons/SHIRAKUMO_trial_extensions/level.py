@@ -175,7 +175,7 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     def prepare(self, context):
         path = ''
         if bpy.data.filepath != '':
-            Path(bpy.data.filepath).with_suffix('.glb')
+            path = Path(bpy.data.filepath).with_suffix('.glb')
         self.steps.append(lambda : bpy.ops.export_scene.gltf(
             filepath=str(path),
             check_existing=False))
