@@ -1,6 +1,7 @@
 import bpy
 import bmesh
 from pathlib import Path
+from math import sqrt
 
 def push_selection(new):
     previous_selected = []
@@ -28,7 +29,7 @@ def hide_all(filter):
         if obj.type == 'MESH':
             obj.hide_render = filter(obj)
 
-def is_bakable_obj(obj):
+def is_bakable_object(obj):
     return (obj.type == 'MESH' and
             (not obj.khr_physics_extra_props or
              not obj.khr_physics_extra_props.is_trigger))
@@ -47,14 +48,13 @@ def ensure_ao_material(obj, size=None):
     if not obj.data.materials:
         mat = bpy.data.materials.new(name="AO_Material")
         mat.use_nodes = True
-        obj.data.materials.append(ma)
+        obj.data.materials.append(mat)
     
     mat = obj.data.materials[0]
     bsdf = mat.node_tree.nodes.get('Principled BSDF')
-    if not bsdf.inputs['Base Color']:
-        tex = bpy.data.textures.new("AO", type='IMAGE')
+    if not bsdf.inputs['Base Color'].links:
+        tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
         tex.image = bpy.data.images.new("AO", size, size)
-        mat.texture_slots.add().texture = tex
         mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
 
 def ensure_physics_obj(obj):
@@ -76,9 +76,10 @@ def rebake(obj):
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.uv.smart_project(island_margin=0.001)
         bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.context.scene.render.engine = 'CYCLES'
         bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', use_clear=True)
 
-def export_single_object(obj):
+def export_single_object(obj, path):
     ensure_physics_obj(obj)
     rebake(obj)
     # Create a virtual scene to export the single object
@@ -110,7 +111,15 @@ class SteppedOperator(bpy.types.Operator):
                 self.timer_count = 0
                 self.index += 1
                 if self.index < len(self.steps):
-                    self.steps[self.index]()
+                    try:
+                        self.steps[self.index]()
+                    except:
+                        import traceback
+                        print(traceback.format_exc())
+                        context.window_manager.event_timer_remove(self.timer)
+                        context.object.shirakumo_operator_progress = -1.0
+                        context.area.tag_redraw()
+                        return {'CANCELLED'}
         
         context.object.shirakumo_operator_progress = float(max(0,self.index))/len(self.steps)
         context.area.tag_redraw()
@@ -131,7 +140,7 @@ class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
     def poll(cls, context):
         if 0 <= context.object.shirakumo_operator_progress: return None
         for obj in context.selected_objects:
-            if is_bakable_obj(obj):
+            if is_bakable_object(obj):
                 return True
         return None
     
@@ -158,7 +167,9 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     bl_label = "ReExport"
     
     def prepare(self, context):
-        path = Path(bpy.data.filepath).with_suffix('.glb')
+        path = ''
+        if bpy.data.filepath != '':
+            Path(bpy.data.filepath).with_suffix('.glb')
         self.steps.append(lambda : bpy.ops.export_scene.gltf(
             filepath=str(path),
             check_existing=False))
