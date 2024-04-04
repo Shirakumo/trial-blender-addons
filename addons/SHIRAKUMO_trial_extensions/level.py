@@ -3,6 +3,8 @@ import bmesh
 from pathlib import Path
 from math import sqrt
 
+ao_map_resolution = 50
+
 def push_selection(new):
     previous_selected = []
     for obj in bpy.context.selected_objects:
@@ -41,9 +43,9 @@ def object_surface_area(obj):
     bm.free()
     return size
 
-def ensure_ao_material(obj, size=None):
+def ensure_ao_material(obj, size=None, resize=False):
     if not size:
-        size = int(100*sqrt(object_surface_area(obj)))
+        size = int(ao_map_resolution*sqrt(object_surface_area(obj)))
 
     if not obj.data.materials:
         mat = bpy.data.materials.new(name="AO_Material")
@@ -57,12 +59,16 @@ def ensure_ao_material(obj, size=None):
         tex.image = bpy.data.images.new("AO", size, size)
         mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
 
+    img = bsdf.inputs['Base Color'].links[0].from_node.image
+    if resize and img.size[0] != size:
+        img.scale(size, size)
+
 def ensure_physics_obj(obj):
     if not obj.rigid_body:
         with Selection([obj]) as sel:
             bpy.ops.rigidbody.objects_add()
 
-def rebake(obj):
+def rebake(obj, resize=True):
     print("Rebake "+str(obj))
     if obj.khr_physics_extra_props.infinite_mass:
         hide_all(lambda obj : not obj.khr_physics_extra_props.infinite_mass)
@@ -71,7 +77,7 @@ def rebake(obj):
         obj.hide_render = False
 
     with Selection([obj]) as sel:
-        ensure_ao_material(obj)
+        ensure_ao_material(obj, None, resize)
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.uv.smart_project(island_margin=0.001)

@@ -36,17 +36,17 @@ class glTF2ExportUserExtension:
         if not self.properties.enabled:
             return
         bg = blender_object.world.node_tree.nodes['Background']
-        if bg:
-            intensity = bg.inputs[1].default_value
-            texture = bg.inputs[0].links[0].from_node
-            orientation = None
-            if 0 < len(texture.inputs[0].links):
-                orientation = [x for x in texture.inputs[0].links[0].from_socket.default_value]
-            if texture.image and texture.image.filepath:
+        if bg and bg.inputs and bg.inputs[0].links:
+            int = bg.inputs[1].default_value
+            tex = bg.inputs[0].links[0].from_node
+            ori = None
+            if 0 < len(tex.inputs[0].links):
+                ori = [x for x in tex.inputs[0].links[0].from_socket.default_value]
+            if tex.image and tex.image.filepath:
                 self.add_extension(gltf2_node,
-                                   ("envmap", texture.image.filepath),
-                                   ("envmapColor", [intensity,intensity,intensity], [1.0,1.0,1.0]),
-                                   ("envmapOrientation", orientation))
+                                   ("envmap", tex.image.filepath),
+                                   ("envmapColor", [int,int,int], [1.0,1.0,1.0]),
+                                   ("envmapOrientation", ori))
             
 
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
