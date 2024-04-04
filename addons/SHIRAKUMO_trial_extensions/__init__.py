@@ -1,7 +1,7 @@
 import bpy
 from . import level
 from . import animations
-from . import triggers
+from . import physics
 from . import exporter
 from . import importer
 from .exporter import glTF2ExportUserExtension
@@ -23,7 +23,7 @@ bl_info = {
 modules = [
     level,
     animations,
-    triggers,
+    physics,
     exporter,
     importer
 ]
