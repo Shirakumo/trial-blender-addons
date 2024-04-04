@@ -18,7 +18,7 @@ bl_info = {
     "url": "https://github.com/shirakumo/trial-blender-addons",
 }
 
-class GLTF_PT_SHIRAKUMO_Trial_ExportExtensionPanel(bpy.types.Panel):
+class GLTF_PT_SHIRAKUMO_TRIAL_ExportExtensionPanel(bpy.types.Panel):
     bl_space_type = "FILE_BROWSER"
     bl_region_type = "TOOL_PROPS"
     bl_label = "Enabled"
@@ -43,7 +43,7 @@ class GLTF_PT_SHIRAKUMO_Trial_ExportExtensionPanel(bpy.types.Panel):
         props = bpy.context.scene.shirakumo_trial_exporter_props
         layout.active = props.enabled
 
-class GLTF_PT_SHIRAKUMO_Trial_ImportExtensionPanel(bpy.types.Panel):
+class GLTF_PT_SHIRAKUMO_TRIAL_ImportExtensionPanel(bpy.types.Panel):
     bl_space_type = "FILE_BROWSER"
     bl_region_type = "TOOL_PROPS"
     bl_label = "Enabled"
@@ -69,8 +69,8 @@ class GLTF_PT_SHIRAKUMO_Trial_ImportExtensionPanel(bpy.types.Panel):
         layout.active = props.enabled
 
 registered_classes = [
-    GLTF_PT_SHIRAKUMO_Trial_ImportExtensionPanel,
-    GLTF_PT_SHIRAKUMO_Trial_ExportExtensionPanel,
+    GLTF_PT_SHIRAKUMO_TRIAL_ImportExtensionPanel,
+    GLTF_PT_SHIRAKUMO_TRIAL_ExportExtensionPanel,
 ]
 
 def register_panel():

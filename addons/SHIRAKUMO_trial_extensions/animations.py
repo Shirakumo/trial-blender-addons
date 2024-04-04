@@ -1,14 +1,14 @@
 import bpy
 
-class SHIRAKUMO_trial_exporter_properties(bpy.types.PropertyGroup):
+class SHIRAKUMO_TRIAL_exporter_properties(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(
-        name="SHIRAKUMO_trial_extensions",
+        name="SHIRAKUMO_TRIAL_extensions",
         description="Include Trial-specific extensions",
         default=True)
 
-class SHIRAKUMO_trial_importer_properties(bpy.types.PropertyGroup):
+class SHIRAKUMO_TRIAL_importer_properties(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(
-        name="SHIRAKUMO_trial_extensions",
+        name="SHIRAKUMO_TRIAL_extensions",
         description="Include Trial-specific extensions",
         default=True)
 
@@ -58,13 +58,13 @@ def root_motion_changed(self, context):
         else:
             delete_tracks_for_rig(obj)
 
-class SHIRAKUMO_trial_action_properties(bpy.types.PropertyGroup):
+class SHIRAKUMO_TRIAL_action_properties(bpy.types.PropertyGroup):
     root_motion: bpy.props.BoolProperty(name="Root Motion", default=False, update=root_motion_changed)
     velocity_scale: bpy.props.FloatProperty(name="Velocity Scale", default=1.0, min=0)
     loop_animation: bpy.props.BoolProperty(name="Loop Animation", default=True)
     next_animation: bpy.props.StringProperty(name="Next Animation", default="")
 
-class SHIRAKUMO_trial_armature_properties(bpy.types.PropertyGroup):
+class SHIRAKUMO_TRIAL_armature_properties(bpy.types.PropertyGroup):
     cancelable: bpy.props.BoolProperty(name="Cancelable", default=True, options={'ANIMATABLE'})
     invincible: bpy.props.BoolProperty(name="Invincible", default=False, options={'ANIMATABLE'})
     damage_target: bpy.props.FloatProperty(name="Target Damage", default=0.0, min=0, options={'ANIMATABLE'})
@@ -73,8 +73,8 @@ class SHIRAKUMO_trial_armature_properties(bpy.types.PropertyGroup):
     lock_target: bpy.props.BoolProperty(name="Lock Target", default=False, options={'ANIMATABLE'})
     lock_camera: bpy.props.BoolProperty(name="Lock Camera", default=False, options={'ANIMATABLE'})
 
-class SHIRAKUMO_PT_trial_action_panel(bpy.types.Panel):
-    bl_idname = "SHIRAKUMO_PT_trial_animation_panel"
+class SHIRAKUMO_TRIAL_PT_action_panel(bpy.types.Panel):
+    bl_idname = "SHIRAKUMO_TRIAL_PT_animation_panel"
     bl_label = "Trial Extensions"
     bl_space_type = "NLA_EDITOR"
     bl_region_type = "UI"
@@ -92,24 +92,24 @@ class SHIRAKUMO_PT_trial_action_panel(bpy.types.Panel):
         flow.column().prop(obj.shirakumo_trial_extra_props, "next_animation")
 
 registered_classes = [
-    SHIRAKUMO_trial_exporter_properties,
-    SHIRAKUMO_trial_importer_properties,
-    SHIRAKUMO_trial_action_properties,
-    SHIRAKUMO_trial_armature_properties,
-    SHIRAKUMO_PT_trial_action_panel,
+    SHIRAKUMO_TRIAL_exporter_properties,
+    SHIRAKUMO_TRIAL_importer_properties,
+    SHIRAKUMO_TRIAL_action_properties,
+    SHIRAKUMO_TRIAL_armature_properties,
+    SHIRAKUMO_TRIAL_PT_action_panel,
 ]
 
 def register():
     for cls in registered_classes:
         bpy.utils.register_class(cls)
     bpy.types.Action.shirakumo_trial_extra_props = bpy.props.PointerProperty(
-        type=SHIRAKUMO_trial_action_properties)
+        type=SHIRAKUMO_TRIAL_action_properties)
     bpy.types.Armature.shirakumo_trial_extra_props = bpy.props.PointerProperty(
-        type=SHIRAKUMO_trial_armature_properties)
+        type=SHIRAKUMO_TRIAL_armature_properties)
     bpy.types.Scene.shirakumo_trial_exporter_props = bpy.props.PointerProperty(
-        type=SHIRAKUMO_trial_exporter_properties)
+        type=SHIRAKUMO_TRIAL_exporter_properties)
     bpy.types.Scene.shirakumo_trial_importer_props = bpy.props.PointerProperty(
-        type=SHIRAKUMO_trial_importer_properties)
+        type=SHIRAKUMO_TRIAL_importer_properties)
 
 def unregister():
     for cls in registered_classes:

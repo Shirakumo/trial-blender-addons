@@ -47,7 +47,7 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
         bpy.context.preferences.edit.use_enter_edit_mode = use_enter_edit_mode
         return {'FINISHED'}
 
-class AddTrigger(GenericTrigger):
+class SHIRAKUMO_TRIAL_OT_add_trigger(GenericTrigger):
     bl_idname = "shirakumo_trial.add_trigger"
     bl_label = "Trigger"
     bl_description = "Construct a trigger volume"
@@ -63,7 +63,7 @@ class AddTrigger(GenericTrigger):
     def customize_layout(self, layout):
         layout.prop(self, 'form', expand=True)
 
-class AddSpawner(GenericTrigger):
+class SHIRAKUMO_TRIAL_OT_add_spawner(GenericTrigger):
     bl_idname = "shirakumo_trial.add_spawner"
     bl_label = "Spawner"
     bl_description = "Construct a spawn volume"
@@ -98,7 +98,7 @@ class AddSpawner(GenericTrigger):
         layout.prop(self, 'spawn_count', expand=True)
         layout.prop(self, 'respawn_cooldown', expand=True)
 
-class AddKillVolume(GenericTrigger):
+class SHIRAKUMO_TRIAL_OT_add_kill_volume(GenericTrigger):
     bl_idname = "shirakumo_trial.add_kill_volume"
     bl_label = "Kill Volume"
     bl_description = "Construct a kill volume"
@@ -115,8 +115,8 @@ class AddKillVolume(GenericTrigger):
     def customize_layout(self, layout):
         layout.prop(self, 'kill_type', expand=True)
 
-class VIEW3D_MT_triggers_add(bpy.types.Menu):
-    bl_idname = "VIEW3D_MT_shirakumo_trial_triggers_add"
+class SHIRAKUMO_TRIAL_MT_triggers_add(bpy.types.Menu):
+    bl_idname = "SHIRAKUMO_TRIAL_MT_triggers_add"
     bl_label = "Triggers"
 
     def draw(self, context):
@@ -130,9 +130,9 @@ def menu_func(self, context):
     layout = self.layout
     layout.operator_context = 'INVOKE_REGION_WIN'
     layout.separator()
-    layout.menu("VIEW3D_MT_shirakumo_trial_triggers_add", text="Triggers", icon="DECORATE")
+    layout.menu("SHIRAKUMO_TRIAL_MT_triggers_add", text="Triggers", icon="DECORATE")
 
-class SHIRAKUMO_trial_trigger_properties(bpy.types.PropertyGroup):
+class SHIRAKUMO_TRIAL_trigger_properties(bpy.types.PropertyGroup):
     type: bpy.props.EnumProperty(name="Type", default="NONE", items=[
         ("NONE", "None", "SEQUENCE", 0),
         ("TRIGGER", "Trigger", "", 1),
@@ -145,8 +145,8 @@ class SHIRAKUMO_trial_trigger_properties(bpy.types.PropertyGroup):
     respawn_cooldown: bpy.props.FloatProperty(name="Respawn Cooldown", default=0.0, min=0.0)
     auto_deactivate: bpy.props.BoolProperty(name="Auto-Deactivate", default=True)
 
-class SHIRAKUMO_PT_trigger_panel(bpy.types.Panel):
-    bl_idname = "SHIRAKUMO_PT_trigger_panel"
+class SHIRAKUMO_TRIAL_PT_trigger_panel(bpy.types.Panel):
+    bl_idname = "SHIRAKUMO_TRIAL_PT_trigger_panel"
     bl_label = "Trial Trigger Extensions"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -176,12 +176,12 @@ class SHIRAKUMO_PT_trigger_panel(bpy.types.Panel):
             flow.column().prop(obj.shirakumo_trial_trigger_props, "kill_type")
 
 registered_classes = [
-    AddTrigger,
-    AddSpawner,
-    AddKillVolume,
-    VIEW3D_MT_triggers_add,
-    SHIRAKUMO_trial_trigger_properties,
-    SHIRAKUMO_PT_trigger_panel,
+    SHIRAKUMO_TRIAL_OT_add_trigger,
+    SHIRAKUMO_TRIAL_OT_add_spawner,
+    SHIRAKUMO_TRIAL_OT_add_kill_volume,
+    SHIRAKUMO_TRIAL_MT_triggers_add,
+    SHIRAKUMO_TRIAL_trigger_properties,
+    SHIRAKUMO_TRIAL_PT_trigger_panel,
 ]
 
 def register():
@@ -189,7 +189,7 @@ def register():
         bpy.utils.register_class(cls)
     bpy.types.VIEW3D_MT_add.append(menu_func)
     bpy.types.Object.shirakumo_trial_trigger_props = bpy.props.PointerProperty(
-        type=SHIRAKUMO_trial_trigger_properties)
+        type=SHIRAKUMO_TRIAL_trigger_properties)
 
 def unregister():
     del bpy.types.Object.shirakumo_trial_trigger_props
