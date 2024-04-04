@@ -57,8 +57,8 @@ class SHIRAKUMO_TRIAL_OT_add_trigger(GenericTrigger):
         description="The Lisp form to execute on trigger")
 
     def customize_object(self, obj):
-        obj.shirakumo_trial_trigger_props.type = 'TRIGGER'
-        obj.shirakumo_trial_trigger_props.form = self.form
+        obj.shirakumo_trial_physics_props.type = 'TRIGGER'
+        obj.shirakumo_trial_physics_props.form = self.form
 
     def customize_layout(self, layout):
         layout.prop(self, 'form', expand=True)
@@ -86,11 +86,11 @@ class SHIRAKUMO_TRIAL_OT_add_spawner(GenericTrigger):
         default=0.0)
 
     def customize_object(self, obj):
-        obj.shirakumo_trial_trigger_props.type = 'SPAWNER'
-        obj.shirakumo_trial_trigger_props.spawn = self.spawn
-        obj.shirakumo_trial_trigger_props.spawn_count = self.spawn_count
-        obj.shirakumo_trial_trigger_props.auto_deactivate = self.auto_deactivate
-        obj.shirakumo_trial_trigger_props.respawn_cooldown = self.respawn_cooldown
+        obj.shirakumo_trial_physics_props.type = 'SPAWNER'
+        obj.shirakumo_trial_physics_props.spawn = self.spawn
+        obj.shirakumo_trial_physics_props.spawn_count = self.spawn_count
+        obj.shirakumo_trial_physics_props.auto_deactivate = self.auto_deactivate
+        obj.shirakumo_trial_physics_props.respawn_cooldown = self.respawn_cooldown
 
     def customize_layout(self, layout):
         layout.prop(self, 'auto_deactivate', expand=True)
@@ -109,8 +109,8 @@ class SHIRAKUMO_TRIAL_OT_add_kill_volume(GenericTrigger):
         default="T")
 
     def customize_object(self, obj):
-        obj.shirakumo_trial_trigger_props.type = 'KILLVOLUME'
-        obj.shirakumo_trial_trigger_props.kill_type = self.kind
+        obj.shirakumo_trial_physics_props.type = 'KILLVOLUME'
+        obj.shirakumo_trial_physics_props.kill_type = self.kind
 
     def customize_layout(self, layout):
         layout.prop(self, 'kill_type', expand=True)
@@ -132,7 +132,7 @@ def menu_func(self, context):
     layout.separator()
     layout.menu("SHIRAKUMO_TRIAL_MT_triggers_add", text="Triggers", icon="DECORATE")
 
-class SHIRAKUMO_TRIAL_trigger_properties(bpy.types.PropertyGroup):
+class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
     type: bpy.props.EnumProperty(name="Type", default="NONE", items=[
         ("NONE", "None", "SEQUENCE", 0),
         ("TRIGGER", "Trigger", "", 1),
@@ -145,8 +145,8 @@ class SHIRAKUMO_TRIAL_trigger_properties(bpy.types.PropertyGroup):
     respawn_cooldown: bpy.props.FloatProperty(name="Respawn Cooldown", default=0.0, min=0.0)
     auto_deactivate: bpy.props.BoolProperty(name="Auto-Deactivate", default=True)
 
-class SHIRAKUMO_TRIAL_PT_trigger_panel(bpy.types.Panel):
-    bl_idname = "SHIRAKUMO_TRIAL_PT_trigger_panel"
+class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
+    bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
     bl_label = "Trial Extensions"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
@@ -164,35 +164,35 @@ class SHIRAKUMO_TRIAL_PT_trigger_panel(bpy.types.Panel):
         layout.use_property_split = True
         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
 
-        flow.column().prop(obj.shirakumo_trial_trigger_props, "type")
-        if obj.shirakumo_trial_trigger_props.type == 'TRIGGER':
-            flow.column().prop(obj.shirakumo_trial_trigger_props, "form")
-        if obj.shirakumo_trial_trigger_props.type == 'SPAWNER':
-            flow.column().prop(obj.shirakumo_trial_trigger_props, "auto_deactivate")
-            flow.column().prop(obj.shirakumo_trial_trigger_props, "spawn")
-            flow.column().prop(obj.shirakumo_trial_trigger_props, "spawn_count")
-            flow.column().prop(obj.shirakumo_trial_trigger_props, "respawn_cooldown")
-        if obj.shirakumo_trial_trigger_props.type == 'KILLVOLUME':
-            flow.column().prop(obj.shirakumo_trial_trigger_props, "kill_type")
+        flow.column().prop(obj.shirakumo_trial_physics_props, "type")
+        if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "form")
+        if obj.shirakumo_trial_physics_props.type == 'SPAWNER':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
+        if obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
 
 registered_classes = [
     SHIRAKUMO_TRIAL_OT_add_trigger,
     SHIRAKUMO_TRIAL_OT_add_spawner,
     SHIRAKUMO_TRIAL_OT_add_kill_volume,
     SHIRAKUMO_TRIAL_MT_triggers_add,
-    SHIRAKUMO_TRIAL_trigger_properties,
-    SHIRAKUMO_TRIAL_PT_trigger_panel,
+    SHIRAKUMO_TRIAL_physics_properties,
+    SHIRAKUMO_TRIAL_PT_physics_panel,
 ]
 
 def register():
     for cls in registered_classes:
         bpy.utils.register_class(cls)
     bpy.types.VIEW3D_MT_add.append(menu_func)
-    bpy.types.Object.shirakumo_trial_trigger_props = bpy.props.PointerProperty(
-        type=SHIRAKUMO_TRIAL_trigger_properties)
+    bpy.types.Object.shirakumo_trial_physics_props = bpy.props.PointerProperty(
+        type=SHIRAKUMO_TRIAL_physics_properties)
 
 def unregister():
-    del bpy.types.Object.shirakumo_trial_trigger_props
+    del bpy.types.Object.shirakumo_trial_physics_props
     bpy.types.VIEW3D_MT_add.remove(menu_func)
     for cls in registered_classes:
         bpy.utils.unregister_class(cls)
