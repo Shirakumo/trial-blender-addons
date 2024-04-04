@@ -69,12 +69,12 @@ def ensure_ao_material(obj, size=None, resize=False):
         if img.size[0] != size:
             img.scale(size, size)
 
-def ensure_physics_obj(obj):
+def ensure_physics_object(obj):
     if not obj.rigid_body:
         with Selection([obj]) as sel:
             bpy.ops.rigidbody.objects_add()
 
-def rebake(obj, resize=True):
+def rebake_object(obj, resize=True):
     print("Rebake "+str(obj))
     if not obj.rigid_body or obj.khr_physics_extra_props.infinite_mass:
         hide_all(lambda obj : obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
@@ -91,12 +91,17 @@ def rebake(obj, resize=True):
         bpy.context.scene.render.engine = 'CYCLES'
         bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', use_clear=True)
 
-def export_single_object(obj, path):
-    ensure_physics_obj(obj)
-    rebake(obj)
-    # Create a virtual scene to export the single object
+def export_single_object(obj=None, path=None):
+    if obj == None:
+        obj = bpy.context.selected_objects
+    if not type(obj) is list:
+        obj = [obj]
+
     bpy.ops.scene.new(type='EMPTY')
-    bpy.context.scene.objects.link(obj)
+    for o in obj:
+        bpy.context.scene.objects.link(o)
+        ensure_physics_object(o)
+        rebake_object(o)
     bpy.ops.export_scene.gltf(
         filepath=str(path),
         check_existing=False,
@@ -146,33 +151,20 @@ class SteppedOperator(bpy.types.Operator):
 
 class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
     bl_idname = "shirakumo_trial.rebake"
-    bl_label = "ReBake Selected"
+    bl_label = "ReBake"
 
     @classmethod
     def poll(cls, context):
         if 0 <= context.object.shirakumo_operator_progress: return None
-        for obj in context.selected_objects:
-            if is_bakable_object(obj):
-                return True
-        return None
     
     def prepare(self, context):
-        for obj in context.selected_objects:
-            if is_bakable_object(obj):
-                self.steps.append(lambda : rebake(obj))
-
-class SHIRAKUMO_TRIAL_OT_rebake_all(SteppedOperator):
-    bl_idname = "shirakumo_trial.rebake_all"
-    bl_label = "ReBake Selected"
-    
-    @classmethod
-    def poll(cls, context):
-        if context.object.shirakumo_operator_progress < 0: return True
-    
-    def prepare(self, context):
+        if 0 < len(context.selected_objects):
+            for obj in context.selected_objects:
+                if is_bakable_object(obj):
+                    self.steps.append(lambda : rebake_object(obj))
         for obj in bpy.data.objects:
             if is_bakable_object(obj):
-                self.steps.append(lambda : rebake(obj))
+                self.steps.append(lambda : rebake_object(obj))
 
 class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     bl_idname = "shirakumo_trial.reexport"
@@ -186,6 +178,20 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
             filepath=str(path),
             check_existing=False))
 
+class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
+    bl_idname = "shirakumo_trial.export_as_object"
+    bl_label = "Export as Object"
+
+    @classmethod
+    def poll(cls, context):
+        if 0 <= context.object.shirakumo_operator_progress: return None
+        for obj in context.selected_objects:
+            if obj.type == 'MESH':
+                return True
+    
+    def prepare(self, context):
+        self.steps.append(lambda : export_single_object())
+
 class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_edit_panel"
     bl_label = "Trial Extensions"
@@ -198,16 +204,19 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
         layout = self.layout
         
         if 0 <= context.object.shirakumo_operator_progress:
-            layout.progress(factor=context.object.shirakumo_operator_progress)
+            layout.column().progress(text="Working..." , factor=context.object.shirakumo_operator_progress)
         else:
-            layout.column().operator("shirakumo_trial.rebake", text="ReBake Selected")
-            layout.column().operator("shirakumo_trial.rebake_all", text="ReBake All")
+            if 0 < len(context.selected_objects):
+                layout.column().operator("shirakumo_trial.rebake", text="ReBake Selected")
+            else:
+                layout.column().operator("shirakumo_trial.rebake", text="ReBake All")
             layout.column().operator("shirakumo_trial.reexport", text="ReExport")
+            layout.column().operator("shirakumo_trial.export_as_object", text="Export as Object")
 
 registered_classes = [
     SHIRAKUMO_TRIAL_OT_rebake,
-    SHIRAKUMO_TRIAL_OT_rebake_all,
     SHIRAKUMO_TRIAL_OT_reexport,
+    SHIRAKUMO_TRIAL_OT_export_as_object,
     SHIRAKUMO_TRIAL_PT_edit_panel,
 ]
 
