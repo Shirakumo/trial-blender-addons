@@ -90,4 +90,50 @@ class glTF2ExportUserExtension:
                            ("loop", props.loop_animation, True),
                            ("next", props.next_animation, ""))
 
+class SHIRAKUMO_TRIAL_exporter_properties(bpy.types.PropertyGroup):
+    enabled: bpy.props.BoolProperty(
+        name="SHIRAKUMO_TRIAL_extensions",
+        description="Include Trial-specific extensions",
+        default=True)
 
+class GLTF_PT_SHIRAKUMO_TRIAL_ExportExtensionPanel(bpy.types.Panel):
+    bl_space_type = "FILE_BROWSER"
+    bl_region_type = "TOOL_PROPS"
+    bl_label = "Enabled"
+    bl_parent_id = "GLTF_PT_export_user_extensions"
+    bl_options = {"DEFAULT_CLOSED"}
+
+    @classmethod
+    def poll(cls, context):
+        sfile = context.space_data
+        operator = sfile.active_operator
+        return operator.bl_idname == "EXPORT_SCENE_OT_gltf"
+
+    def draw_header(self, context):
+        props = bpy.context.scene.shirakumo_trial_exporter_props
+        self.layout.prop(props, "enabled")
+
+    def draw(self, context):
+        layout = self.layout
+        layout.use_property_split = True
+        layout.use_property_decorate = False  # No animation.
+
+        props = bpy.context.scene.shirakumo_trial_exporter_props
+        layout.active = props.enabled
+
+def register():
+    try:
+        bpy.utils.register_class(GLTF_PT_SHIRAKUMO_TRIAL_ExportExtensionPanel)
+        bpy.utils.register_class(SHIRAKUMO_TRIAL_exporter_properties)
+        bpy.types.Scene.shirakumo_trial_exporter_props = bpy.props.PointerProperty(
+            type=SHIRAKUMO_TRIAL_exporter_properties)
+    except:
+        pass
+
+def unregister():
+    try:
+        bpy.utils.unregister_class(GLTF_PT_SHIRAKUMO_TRIAL_ExportExtensionPanel)
+        bpy.utils.unregister_class(SHIRAKUMO_TRIAL_exporter_properties)
+        del bpy.types.Scene.shirakumo_trial_exporter_props
+    except:
+        pass
