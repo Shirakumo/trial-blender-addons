@@ -70,8 +70,8 @@ def ensure_physics_obj(obj):
 
 def rebake(obj, resize=True):
     print("Rebake "+str(obj))
-    if obj.khr_physics_extra_props.infinite_mass:
-        hide_all(lambda obj : not obj.khr_physics_extra_props.infinite_mass)
+    if not obj.rigid_body or obj.khr_physics_extra_props.infinite_mass:
+        hide_all(lambda obj : obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
     else:
         hide_all(lambda obj : True)
         obj.hide_render = False
