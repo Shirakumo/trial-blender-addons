@@ -63,7 +63,7 @@ class glTF2ExportUserExtension:
                                ("lockTarget", False),
                                ("lockCamera", False))
         elif blender_object.type == "OBJECT":
-            props = blender_object.shirakumo_trial_trigger_props
+            props = blender_object.shirakumo_trial_physics_props
             if props.type == "TRIGGER":
                 self.add_extension(gltf2_node,
                                    ("trigger", args_dict(
