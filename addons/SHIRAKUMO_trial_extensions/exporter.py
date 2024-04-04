@@ -68,17 +68,20 @@ class glTF2ExportUserExtension:
                 self.add_extension(gltf2_node,
                                    ("trigger", args_dict(
                                        ("form", props.form))))
-            if props.type == "SPAWNER":
+            elif props.type == "SPAWNER":
                 self.add_extension(gltf2_node,
                                    ("spawner", args_dict(
                                        ("spawn", props.spawn),
                                        ("spawnCount", props.spawn_count, 1),
                                        ("autoDeactivate", props.auto_deactivate, True),
                                        ("respawnCooldown", props.respawn_cooldown, 0.0))))
-            if props.type == "KILLVOLUME":
+            elif props.type == "KILLVOLUME":
                 self.add_extension(gltf2_node,
                                    ("killvolume", args_dict(
                                        ("kill", props.kill_type))))
+            else:
+                self.add_extension(gltf2_node,
+                                   ("virtual", props.virtual, False))
 
     def gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings):
         if not self.properties.enabled:
