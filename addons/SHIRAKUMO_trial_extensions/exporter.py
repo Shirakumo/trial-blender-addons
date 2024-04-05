@@ -15,7 +15,7 @@ def args_dict(*args):
     return props
 
 class glTF2ExportUserExtension:
-    name = "SHIRAKUMO_Trial"
+    name = "SHIRAKUMO_trial"
 
     def __init__(self):
         from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
@@ -68,7 +68,7 @@ class glTF2ExportUserExtension:
                                ("knockTarget", False),
                                ("lockTarget", False),
                                ("lockCamera", False))
-        elif blender_object.type == "OBJECT":
+        elif blender_object.type == "MESH":
             props = blender_object.shirakumo_trial_physics_props
             if props.type == "TRIGGER":
                 self.add_extension(gltf2_node,
