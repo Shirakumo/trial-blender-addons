@@ -75,7 +75,7 @@ def ensure_physics_object(obj):
             bpy.ops.rigidbody.objects_add()
 
 def rebake_object(obj, resize=True):
-    print("Rebake "+str(obj))
+    print("Rebake "+obj.name)
     if not obj.rigid_body or obj.khr_physics_extra_props.infinite_mass:
         hide_all(lambda obj : obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
     else:
@@ -158,13 +158,12 @@ class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
         return context.object.shirakumo_operator_progress < 0
     
     def prepare(self, context):
-        if 0 < len(context.selected_objects):
-            for obj in context.selected_objects:
-                if is_bakable_object(obj):
-                    self.steps.append(lambda : rebake_object(obj))
-        for obj in bpy.data.objects:
+        objects = context.selected_objects
+        if len(objects) == 0:
+            objects = bpy.data.objects
+        for obj in objects:
             if is_bakable_object(obj):
-                self.steps.append(lambda : rebake_object(obj))
+                self.steps.append(lambda o=obj : rebake_object(o))
 
 class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     bl_idname = "shirakumo_trial.reexport"
