@@ -35,9 +35,9 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
         bpy.context.preferences.edit.use_enter_edit_mode = False
 
         bpy.ops.mesh.primitive_cube_add(calc_uvs=False)
-        obj = bpy.context.selected_objects[0]
-        obj.name = "Trigger"
         bpy.ops.rigidbody.objects_add()
+        obj = bpy.context.selected_objects[0]
+        obj.name = self.bl_label
         obj.color = (1, 0, 1, 1)
         obj.hide_render = True
         obj.show_bounds = True
@@ -117,7 +117,7 @@ class SHIRAKUMO_TRIAL_OT_add_kill_volume(GenericTrigger):
 
     def customize_object(self, obj):
         obj.shirakumo_trial_physics_props.type = 'KILLVOLUME'
-        obj.shirakumo_trial_physics_props.kill_type = self.kind
+        obj.shirakumo_trial_physics_props.kill_type = self.kill_type
 
     def customize_layout(self, layout):
         layout.prop(self, 'kill_type', expand=True)
