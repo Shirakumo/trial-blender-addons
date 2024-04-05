@@ -115,6 +115,22 @@ class SHIRAKUMO_TRIAL_OT_add_kill_volume(GenericTrigger):
     def customize_layout(self, layout):
         layout.prop(self, 'kill_type', expand=True)
 
+class SHIRAKUMO_TRIAL_OT_add_checkpoint(GenericTrigger):
+    bl_idname = "shirakumo_trial.add_checkpoint"
+    bl_label = "Checkpoint"
+    bl_description = "Construct a checkpoint"
+    
+    def customize_object(self, obj):
+        obj.shirakumo_trial_physics_props.type = 'CHECKPOINT'
+        child = bpy.data.objects.new('Spawnpoint', None)
+        obj.users_collection[0].objects.link(child)
+        child.empty_display_type = 'SINGLE_ARROW'
+        child.location = obj.location
+        child.parent = obj
+        
+    def customize_layout(self, layout):
+        pass
+
 class SHIRAKUMO_TRIAL_MT_triggers_add(bpy.types.Menu):
     bl_idname = "SHIRAKUMO_TRIAL_MT_triggers_add"
     bl_label = "Triggers"
@@ -125,6 +141,7 @@ class SHIRAKUMO_TRIAL_MT_triggers_add(bpy.types.Menu):
         layout.operator("shirakumo_trial.add_trigger", text="Trigger", icon="SEQUENCE")
         layout.operator("shirakumo_trial.add_spawner", text="Spawner", icon="GHOST_ENABLED")
         layout.operator("shirakumo_trial.add_kill_volume", text="Kill Volume", icon="GHOST_DISABLED")
+        layout.operator("shirakumo_trial.add_checkpoint", text="Checkpoint", icon="CHECKBOX_HLT")
         
 def menu_func(self, context):
     layout = self.layout
@@ -142,6 +159,7 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
             ("TRIGGER", "Trigger", "", 1),
             ("SPAWNER", "Spawner", "GHOST_ENABLED", 2),
             ("KILLVOLUME", "Kill Volume", "GHOST_DISABLED", 3),
+            ("CHECKPOINT", "Checkpoint", "CHECKBOX_HLT", 4),
         ])
     form: bpy.props.StringProperty(
         name="Lisp Form",
@@ -191,13 +209,15 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
             flow.column().prop(obj.shirakumo_trial_physics_props, "type")
             if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
                 flow.column().prop(obj.shirakumo_trial_physics_props, "form")
-            if obj.shirakumo_trial_physics_props.type == 'SPAWNER':
+            elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
                 flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
-            if obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
+            elif obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
                 flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
+            elif obj.shirakumo_trial_physics_props.type == 'CHECKPOINT':
+                pass
         else:
             flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
 
@@ -205,6 +225,7 @@ registered_classes = [
     SHIRAKUMO_TRIAL_OT_add_trigger,
     SHIRAKUMO_TRIAL_OT_add_spawner,
     SHIRAKUMO_TRIAL_OT_add_kill_volume,
+    SHIRAKUMO_TRIAL_OT_add_checkpoint,
     SHIRAKUMO_TRIAL_MT_triggers_add,
     SHIRAKUMO_TRIAL_physics_properties,
     SHIRAKUMO_TRIAL_PT_physics_panel,

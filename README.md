@@ -33,6 +33,8 @@ On object nodes set as physics objects the fields are:
   - ``respawnCooldown`` How much time to wait to respawn a removed object
 - ``killvolume``
   - ``kill`` A Lisp type expression to match which objects to remove when entering the trigger volume
+- ``checkpoint``
+  - ``spawnPoint`` The location at which to respawn after triggering the checkpoint
 
 On animations the fields are:
 

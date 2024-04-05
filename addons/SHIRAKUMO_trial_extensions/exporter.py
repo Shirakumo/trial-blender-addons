@@ -79,6 +79,12 @@ class glTF2ExportUserExtension:
                 self.add_extension(gltf2_node,
                                    ("killvolume", args_dict(
                                        ("kill", props.kill_type))))
+            elif props.type == "CHECKPOINT":
+                spawnpoint = blender_object.children[0]
+                if not spawnpoint: return
+                self.add_extension(gltf2_node,
+                                   ("checkpoint", args_dict(
+                                       ("spawnPoint", list(spawnpoint.location)))))
             else:
                 self.add_extension(gltf2_node,
                                    ("virtual", props.virtual, False))
