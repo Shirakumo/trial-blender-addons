@@ -155,7 +155,7 @@ class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
 
     @classmethod
     def poll(cls, context):
-        if 0 <= context.object.shirakumo_operator_progress: return None
+        return context.object.shirakumo_operator_progress < 0
     
     def prepare(self, context):
         if 0 < len(context.selected_objects):
@@ -184,10 +184,10 @@ class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
 
     @classmethod
     def poll(cls, context):
-        if 0 <= context.object.shirakumo_operator_progress: return None
-        for obj in context.selected_objects:
-            if obj.type == 'MESH':
-                return True
+        if context.object.shirakumo_operator_progress < 0:
+            for obj in context.selected_objects:
+                if obj.type == 'MESH':
+                    return True
     
     def prepare(self, context):
         self.steps.append(lambda : export_single_object())
