@@ -15,6 +15,7 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
         ])
     filter: bpy.props.StringProperty(
         name="Filter",
+        default="T",
         description="A class filter to apply to the trigger volume")
 
     def customize_layout(self, layout):
@@ -59,6 +60,7 @@ class SHIRAKUMO_TRIAL_OT_add_trigger(GenericTrigger):
     
     form: bpy.props.StringProperty(
         name="Lisp Form",
+        default="",
         description="The Lisp form to execute on trigger")
 
     def customize_object(self, obj):
@@ -75,20 +77,20 @@ class SHIRAKUMO_TRIAL_OT_add_spawner(GenericTrigger):
     
     spawn: bpy.props.StringProperty(
         name="Item",
+        default="",
         description="The item to spawn")
     spawn_count: bpy.props.IntProperty(
         name="Count",
-        description="The number of items to spawn",
-        min=1,
-        default=1)
+        default=1, min=1,
+        description="The number of items to spawn")
     auto_deactivate: bpy.props.BoolProperty(
         name="Auto-Deactivate",
-        description="Whether to deactivate the trigger after all its items have been removed",
-        default=True)
+        default=True,
+        description="Whether to deactivate the trigger after all its items have been removed")
     respawn_cooldown: bpy.props.FloatProperty(
         name="Respawn Cooldown",
-        description="The number of seconds to wait between the last item was removed before respawning",
-        default=0.0, min=0.0, unit='TIME')
+        default=0.0, min=0.0, unit='TIME',
+        description="The number of seconds to wait between the last item was removed before respawning")
 
     def customize_object(self, obj):
         obj.shirakumo_trial_physics_props.type = 'SPAWNER'
@@ -110,8 +112,8 @@ class SHIRAKUMO_TRIAL_OT_add_kill_volume(GenericTrigger):
     
     kill_type: bpy.props.StringProperty(
         name="Type",
-        description="The type name of things to despawn",
-        default="T")
+        default="T",
+        description="The type name of things to despawn")
 
     def customize_object(self, obj):
         obj.shirakumo_trial_physics_props.type = 'KILLVOLUME'
@@ -190,6 +192,10 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         name="Auto-Deactivate",
         default=True,
         description="Whether the trigger should deactivate itself when all its spawned items have been removed")
+    kill_type: bpy.props.StringProperty(
+        name="Type",
+        description="The type name of things to despawn",
+        default="T")
     virtual: bpy.props.BoolProperty(
         name="Virtual",
         default=False,
