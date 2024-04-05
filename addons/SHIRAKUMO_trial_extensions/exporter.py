@@ -67,10 +67,12 @@ class glTF2ExportUserExtension:
             if props.type == "TRIGGER":
                 self.add_extension(gltf2_node,
                                    ("trigger", args_dict(
+                                       ("filter", props.filter, "T"),
                                        ("form", props.form))))
             elif props.type == "SPAWNER":
                 self.add_extension(gltf2_node,
                                    ("spawner", args_dict(
+                                       ("filter", props.filter, "T"),
                                        ("spawn", props.spawn),
                                        ("spawnCount", props.spawn_count, 1),
                                        ("autoDeactivate", props.auto_deactivate, True),
@@ -78,12 +80,14 @@ class glTF2ExportUserExtension:
             elif props.type == "KILLVOLUME":
                 self.add_extension(gltf2_node,
                                    ("killvolume", args_dict(
+                                       ("filter", props.filter, "T"),
                                        ("kill", props.kill_type))))
             elif props.type == "CHECKPOINT":
                 spawnpoint = blender_object.children[0]
                 if not spawnpoint: return
                 self.add_extension(gltf2_node,
                                    ("checkpoint", args_dict(
+                                       ("filter", props.filter, "T"),
                                        ("spawnPoint", list(spawnpoint.location)))))
             else:
                 self.add_extension(gltf2_node,
