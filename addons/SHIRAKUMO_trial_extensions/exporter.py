@@ -1,4 +1,5 @@
 import bpy
+import os
 from typing import Dict
 from io_scene_gltf2.io.com import gltf2_io
 
@@ -43,8 +44,13 @@ class glTF2ExportUserExtension:
             if 0 < len(tex.inputs[0].links):
                 ori = [x for x in tex.inputs[0].links[0].from_socket.default_value]
             if tex.image and tex.image.filepath:
+                path = tex.image.filepath
+                if path.startswith("//"):
+                    path = tex.image.filepath[2:]
+                if path.startswith("/"):
+                    path = os.path.relpath(path, export_settings['gltf_filepath'])
                 self.add_extension(gltf2_node,
-                                   ("envmap", tex.image.filepath),
+                                   ("envmap", path),
                                    ("envmapColor", [int,int,int], [1.0,1.0,1.0]),
                                    ("envmapOrientation", ori))
             
