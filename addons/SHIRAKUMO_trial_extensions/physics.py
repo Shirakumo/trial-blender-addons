@@ -13,6 +13,9 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
             ("CAPSULE", "Capsule", "MESH_CAPSULE", 3),
             ("CYLINDER", "Cylinder", "MESH_CYLINDER", 4),
         ])
+    filter: bpy.props.StringProperty(
+        name="Filter",
+        description="A class filter to apply to the trigger volume")
 
     def customize_layout(self, layout):
         pass
@@ -23,6 +26,7 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
     def draw(self, context):
         layout = self.layout
         layout.prop(self, 'shape', expand=True)
+        layout.prop(self, "filter", expand=True)
         self.customize_layout(layout)
     
     def execute(self, context):
@@ -40,6 +44,7 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
         obj.display_bounds_type = self.shape
         obj.rigid_body.collision_shape = self.shape
         obj.khr_physics_extra_props.is_trigger = True
+        obj.shirakumo_trial_physics_props.filter = self.filter
         self.customize_object(obj)
         
         if use_enter_edit_mode:
@@ -161,6 +166,10 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
             ("KILLVOLUME", "Kill Volume", "GHOST_DISABLED", 3),
             ("CHECKPOINT", "Checkpoint", "CHECKBOX_HLT", 4),
         ])
+    filter: bpy.props.StringProperty(
+        name="Filter",
+        default="T",
+        description="A class filter to apply to the trigger volume")
     form: bpy.props.StringProperty(
         name="Lisp Form",
         default="",
@@ -207,6 +216,7 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
 
         if context.object.khr_physics_extra_props.is_trigger:
             flow.column().prop(obj.shirakumo_trial_physics_props, "type")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
             if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
                 flow.column().prop(obj.shirakumo_trial_physics_props, "form")
             elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
