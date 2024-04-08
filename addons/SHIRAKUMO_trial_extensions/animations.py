@@ -47,10 +47,23 @@ def root_motion_changed(self, context):
             delete_tracks_for_rig(obj)
 
 class SHIRAKUMO_TRIAL_action_properties(bpy.types.PropertyGroup):
-    root_motion: bpy.props.BoolProperty(name="Root Motion", default=False, update=root_motion_changed)
-    velocity_scale: bpy.props.FloatProperty(name="Velocity Scale", default=1.0, min=0)
-    loop_animation: bpy.props.BoolProperty(name="Loop Animation", default=True)
-    next_animation: bpy.props.StringProperty(name="Next Animation", default="")
+    root_motion: bpy.props.BoolProperty(
+        name="Root Motion",
+        default=False,
+        update=root_motion_changed,
+        description="Whether the engine should translate motion on the root bone to physics motion")
+    velocity_scale: bpy.props.FloatProperty(
+        name="Velocity Scale",
+        default=1.0, min=0, options=set(),
+        description="The scaling factor of the root motion velocity")
+    loop_animation: bpy.props.BoolProperty(
+        name="Loop Animation",
+        default=True, options=set(),
+        description="Whether to loop the animation or stick to the last frame on end")
+    next_animation: bpy.props.StringProperty(
+        name="Next Animation",
+        default="", options=set(),
+        description="The name of the animation to queue after this one completes")
 
 class SHIRAKUMO_TRIAL_armature_properties(bpy.types.PropertyGroup):
     cancelable: bpy.props.BoolProperty(name="Cancelable", default=True, options={'ANIMATABLE'})
@@ -74,10 +87,16 @@ class SHIRAKUMO_TRIAL_PT_action_panel(bpy.types.Panel):
         layout.use_property_split = True
         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
         obj = context.object.animation_data.action
-        flow.column().prop(obj.shirakumo_trial_extra_props, "loop_animation")
-        flow.column().prop(obj.shirakumo_trial_extra_props, "root_motion")
-        flow.column().prop(obj.shirakumo_trial_extra_props, "velocity_scale")
-        flow.column().prop(obj.shirakumo_trial_extra_props, "next_animation")
+        col = flow.column()
+        col.prop(obj.shirakumo_trial_extra_props, "root_motion")
+        col = flow.column()
+        col.enabled = obj.shirakumo_trial_extra_props.root_motion
+        col.prop(obj.shirakumo_trial_extra_props, "velocity_scale")
+        col = flow.column()
+        col.prop(obj.shirakumo_trial_extra_props, "loop_animation")
+        col = flow.column()
+        col.enabled = not obj.shirakumo_trial_extra_props.loop_animation
+        col.prop(obj.shirakumo_trial_extra_props, "next_animation")
 
 registered_classes = [
     SHIRAKUMO_TRIAL_action_properties,
