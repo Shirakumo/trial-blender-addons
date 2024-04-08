@@ -175,7 +175,8 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
             path = Path(bpy.data.filepath).with_suffix('.glb')
         self.steps.append(lambda : bpy.ops.export_scene.gltf(
             filepath=str(path),
-            check_existing=False))
+            check_existing=False,
+            use_visible=True))
 
 class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
     bl_idname = "shirakumo_trial.export_as_object"
