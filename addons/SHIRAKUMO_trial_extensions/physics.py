@@ -159,7 +159,7 @@ def menu_func(self, context):
 class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
     type: bpy.props.EnumProperty(
         name="Type",
-        default="NONE",
+        default="NONE", options=set(),
         description="The type of trigger volume this object is",
         items=[
             ("NONE", "None", "SEQUENCE", 0),
@@ -170,35 +170,35 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         ])
     filter: bpy.props.StringProperty(
         name="Filter",
-        default="T",
+        default="T", options=set(),
         description="A class filter to apply to the trigger volume")
     form: bpy.props.StringProperty(
         name="Lisp Form",
-        default="",
+        default="", options=set(),
         description="The Lisp form to evaluate when the trigger is hit")
     spawn: bpy.props.StringProperty(
         name="Item",
-        default="",
+        default="", options=set(),
         description="A Lisp form identifying the item to spawn")
     spawn_count: bpy.props.IntProperty(
         name="Spawn Count",
-        default=1, min=1,
+        default=1, min=1, options=set(),
         description="The number of items to spawn")
     respawn_cooldown: bpy.props.FloatProperty(
         name="Respawn Cooldown",
-        default=0.0, min=0.0, unit='TIME',
+        default=0.0, min=0.0, unit='TIME', options=set(),
         description="The number of seconds to wait between a spawned item being removed and it being respawned")
     auto_deactivate: bpy.props.BoolProperty(
         name="Auto-Deactivate",
-        default=True,
+        default=True, options=set(),
         description="Whether the trigger should deactivate itself when all its spawned items have been removed")
     kill_type: bpy.props.StringProperty(
         name="Type",
-        description="The type name of things to despawn",
-        default="T")
+        default="T", options=set(),
+        description="The type name of things to despawn")
     virtual: bpy.props.BoolProperty(
         name="Virtual",
-        default=False,
+        default=False, options=set(),
         description="If true the object won't be visible, but will be participating in physics interactions")
 
 class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
