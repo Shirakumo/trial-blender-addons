@@ -3,7 +3,7 @@ import bmesh
 from pathlib import Path
 from math import sqrt
 
-ao_map_resolution = 8
+ao_map_resolution = 16
 
 def push_selection(new):
     previous_selected = []
