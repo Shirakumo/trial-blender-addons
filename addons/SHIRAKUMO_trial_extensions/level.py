@@ -3,8 +3,6 @@ import bmesh
 from pathlib import Path
 from math import sqrt
 
-ao_map_resolution = 16
-
 def push_selection(new):
     previous_selected = []
     for obj in bpy.context.selected_objects:
@@ -52,7 +50,8 @@ def ensure_ao_material(obj, size=None, resize=False):
         mat = bpy.data.materials.new(name="AO_Material")
         mat.use_nodes = True
         obj.data.materials.append(mat)
-    
+
+    ao_map_resolution = bpy.context.scene.shirakumo_trial_file_properties.ao_map_resolution
     mat = obj.data.materials[0]
     bsdf = mat.node_tree.nodes.get('Principled BSDF')
     if not bsdf.inputs['Base Color'].links:
@@ -146,7 +145,7 @@ class SteppedOperator(bpy.types.Operator):
         context.object.shirakumo_operator_progress = 0.0
         context.window_manager.modal_handler_add(self)
         self.timer = context.window_manager.event_timer_add(0.1, window=context.window)
-        self.prepare(context)
+        self.prepare(context, event)
         return {'RUNNING_MODAL'}
 
 class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
@@ -157,7 +156,7 @@ class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
     def poll(cls, context):
         return context.object.shirakumo_operator_progress < 0
     
-    def prepare(self, context):
+    def prepare(self, context, event):
         objects = context.selected_objects
         if len(objects) == 0:
             objects = bpy.data.objects
@@ -169,14 +168,16 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     bl_idname = "shirakumo_trial.reexport"
     bl_label = "ReExport"
     
-    def prepare(self, context):
-        path = ''
-        if bpy.data.filepath != '':
-            path = Path(bpy.data.filepath).with_suffix('.glb')
-        self.steps.append(lambda : bpy.ops.export_scene.gltf(
-            filepath=str(path),
-            check_existing=False,
-            use_visible=True))
+    def prepare(self, context, event):
+        path = context.scene.shirakumo_trial_file_properties.export_path
+        if path == '' or event.ctrl:
+            self.steps.append(lambda : bpy.ops.export_scene.gltf('INVOKE_DEFAULT',
+                                                                 check_existing=False,
+                                                                 use_visible=True))
+        else:
+            self.steps.append(lambda : bpy.ops.export_scene.gltf(filepath=path,
+                                                                 check_existing=False,
+                                                                 use_visible=True))
 
 class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
     bl_idname = "shirakumo_trial.export_as_object"
@@ -189,7 +190,7 @@ class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
                 if obj.type == 'MESH':
                     return True
     
-    def prepare(self, context):
+    def prepare(self, context, event):
         self.steps.append(lambda : export_single_object())
 
 class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
@@ -206,6 +207,7 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
         if 0 <= context.object.shirakumo_operator_progress:
             layout.column().progress(text="Working..." , factor=context.object.shirakumo_operator_progress)
         else:
+            layout.column().prop(context.scene.shirakumo_trial_file_properties, "ao_map_resolution")
             if 0 < len(context.selected_objects):
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake Selected")
             else:
@@ -213,19 +215,33 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
             layout.column().operator("shirakumo_trial.reexport", text="ReExport")
             layout.column().operator("shirakumo_trial.export_as_object", text="Export as Object")
 
+class SHIRAKUMO_TRIAL_file_properties(bpy.types.PropertyGroup):
+    ao_map_resolution: bpy.props.IntProperty(
+        name="AO Map Resolution",
+        default=16, min=1, soft_max=256, subtype='FACTOR', options=set(),
+        description="The resolution scaling for ambient occlusion maps")
+    export_path: bpy.props.StringProperty(
+        name="Export Path",
+        default="", subtype='FILE_PATH', options=set(),
+        description="The path to export to with the ReExport button")
+
 registered_classes = [
     SHIRAKUMO_TRIAL_OT_rebake,
     SHIRAKUMO_TRIAL_OT_reexport,
     SHIRAKUMO_TRIAL_OT_export_as_object,
     SHIRAKUMO_TRIAL_PT_edit_panel,
+    SHIRAKUMO_TRIAL_file_properties,
 ]
 
 def register():
-    bpy.types.Object.shirakumo_operator_progress = bpy.props.FloatProperty(name="Progress", default=-1.0)
     for cls in registered_classes:
         bpy.utils.register_class(cls)
+    bpy.types.Object.shirakumo_operator_progress = bpy.props.FloatProperty(name="Progress", default=-1.0)
+    bpy.types.Scene.shirakumo_trial_file_properties = bpy.props.PointerProperty(
+        type=SHIRAKUMO_TRIAL_file_properties)
 
 def unregister():
     del bpy.types.Object.shirakumo_operator_progress
+    del bpy.types.Scene.shirakumo_trial_file_properties
     for cls in registered_classes:
         bpy.utils.unregister_class(cls)
