@@ -42,6 +42,7 @@ On animations the fields are:
 - ``velocityScale`` How much to scale the physical root motion by
 - ``loop`` Whether the animation should loop or not
 - ``next`` The name of the animation to queue after this one
+- ``blendDuration`` The default duration (in seconds) to use when blending to this animation
 
 On scenes the fields are:
 

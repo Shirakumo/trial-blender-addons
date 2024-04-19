@@ -108,7 +108,8 @@ class glTF2ExportUserExtension:
                            ("rootMotion", props.root_motion, False),
                            ("velocityScale", props.velocity_scale, 1.0),
                            ("loop", props.loop_animation, True),
-                           ("next", props.next_animation, ""))
+                           ("next", props.next_animation, ""),
+                           ("blendDuration", props.blend_duration, 0.2))
 
 class SHIRAKUMO_TRIAL_exporter_properties(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(
