@@ -64,6 +64,10 @@ class SHIRAKUMO_TRIAL_action_properties(bpy.types.PropertyGroup):
         name="Next Animation",
         default="", options=set(),
         description="The name of the animation to queue after this one completes")
+    blend_duration: bpy.props.FloatProperty(
+        name="Blend Duration",
+        default=0.2, min=0.0, subtype='TIME', options=set(),
+        description="The default duration of the blend when switching to this animation")
 
 class SHIRAKUMO_TRIAL_armature_properties(bpy.types.PropertyGroup):
     cancelable: bpy.props.BoolProperty(name="Cancelable", default=True, options={'ANIMATABLE'})
@@ -88,15 +92,17 @@ class SHIRAKUMO_TRIAL_PT_action_panel(bpy.types.Panel):
         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
         obj = context.object.animation_data.action
         col = flow.column()
-        col.prop(obj.shirakumo_trial_extra_props, "root_motion")
-        col = flow.column()
-        col.enabled = obj.shirakumo_trial_extra_props.root_motion
-        col.prop(obj.shirakumo_trial_extra_props, "velocity_scale")
-        col = flow.column()
         col.prop(obj.shirakumo_trial_extra_props, "loop_animation")
         col = flow.column()
         col.enabled = not obj.shirakumo_trial_extra_props.loop_animation
         col.prop(obj.shirakumo_trial_extra_props, "next_animation")
+        col = flow.column()
+        col.prop(obj.shirakumo_trial_extra_props, "blend_duration")
+        
+        (header, panel) = flow.panel_prop(obj.shirakumo_trial_extra_props, "root_motion")
+        header.prop(obj.shirakumo_trial_extra_props, "root_motion", expand=False)
+        if panel:
+            panel.prop(obj.shirakumo_trial_extra_props, "velocity_scale")
 
 registered_classes = [
     SHIRAKUMO_TRIAL_action_properties,
