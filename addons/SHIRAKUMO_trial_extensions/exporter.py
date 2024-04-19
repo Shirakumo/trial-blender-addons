@@ -95,7 +95,7 @@ class glTF2ExportUserExtension:
                 self.add_extension(gltf2_node,
                                    ("checkpoint", args_dict(
                                        ("filter", props.filter, "T"),
-                                       ("spawnPoint", list(spawnpoint.location)))))
+                                       ("spawnPoint", list(spawnpoint.matrix_local.translation)))))
             else:
                 self.add_extension(gltf2_node,
                                    ("virtual", props.virtual, False))
