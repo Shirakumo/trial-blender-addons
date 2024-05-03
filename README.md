@@ -38,7 +38,10 @@ On object nodes set as physics objects the fields are:
 
 On animations the fields are:
 
-- ``rootMotion`` Whether the animation should use inferred physical root motion
+- ``type`` 
+  - ``DEFAULT`` Default animation that is just played back with no engine assistance.
+  - ``BLOCKING`` A blocking animation that has a ``cancelable`` property.
+  - ``PHYSICAL`` A physical root-motion animation.
 - ``velocityScale`` How much to scale the physical root motion by
 - ``loop`` Whether the animation should loop or not
 - ``next`` The name of the animation to queue after this one

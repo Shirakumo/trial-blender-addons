@@ -105,7 +105,7 @@ class glTF2ExportUserExtension:
             return
         props = blender_action.shirakumo_trial_extra_props
         self.add_extension(gltf2_animation,
-                           ("rootMotion", props.root_motion, False),
+                           ("type", props.type, "DEFAULT"),
                            ("velocityScale", props.velocity_scale, 1.0),
                            ("loop", props.loop_animation, True),
                            ("next", props.next_animation, ""),
