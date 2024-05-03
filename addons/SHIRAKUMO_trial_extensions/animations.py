@@ -1,57 +1,54 @@
 import bpy
 
-def ensure_track_for_property(obj, data_path, interpolation="CONSTANT"):
+def ensure_track_for_property(obj, base, prop, interpolation="CONSTANT", intended=True):
+    data_path = base+"."+prop
     action = obj.animation_data.action
     for fcurve in action.fcurves:
         if fcurve.data_path == data_path:
-            return fcurve
-    fcurve = action.fcurves.new(data_path)
-    range = action.frame_range
-    fcurve.keyframe_points.insert(frame=range[0], value=0.0).interpolation = interpolation
-    fcurve.keyframe_points.insert(frame=range[1], value=0.0).interpolation = interpolation
-    return fcurve
+            if intended == True or prop in intended:
+                return fcurve
+            else:
+                obj.animation_data.action.fcurves.remove(fcurve)
+                return None
+    if intended == True or prop in intended:
+        fcurve = action.fcurves.new(data_path)
+        range = action.frame_range
+        fcurve.keyframe_points.insert(frame=range[0], value=0.0).interpolation = interpolation
+        fcurve.keyframe_points.insert(frame=range[1], value=0.0).interpolation = interpolation
+        return fcurve
+    return None
 
-def ensure_tracks_for_rig(obj):
-    ## This sucks but I can't figure out how else to iterate programmatically.
+def ensure_tracks_for_rig(obj, tracks=True):
     base = "data.shirakumo_trial_extra_props"
-    ensure_track_for_property(obj, base+".cancelable")
-    ensure_track_for_property(obj, base+".invincible")
-    ensure_track_for_property(obj, base+".damage_target", "LINEAR")
-    ensure_track_for_property(obj, base+".stun_target", "LINEAR")
-    ensure_track_for_property(obj, base+".knock_target")
-    ensure_track_for_property(obj, base+".lock_target")
-    ensure_track_for_property(obj, base+".lock_camera")
+    ensure_track_for_property(obj, base, "cancelable", "CONSTANT", tracks)
+    ensure_track_for_property(obj, base, "invincible", "CONSTANT", tracks)
+    ensure_track_for_property(obj, base, "damage_target", "LINEAR", tracks)
+    ensure_track_for_property(obj, base, "stun_target", "LINEAR", tracks)
+    ensure_track_for_property(obj, base, "knock_target", "CONSTANT", tracks)
+    ensure_track_for_property(obj, base, "lock_target", "CONSTANT", tracks)
+    ensure_track_for_property(obj, base, "lock_camera", "CONSTANT", tracks)
 
-def delete_track_for_property(obj, data_path):
-    for fcurve in obj.animation_data.action.fcurves:
-        if fcurve.data_path == data_path:
-            obj.animation_data.action.fcurves.remove(fcurve)
-            return
-
-def delete_tracks_for_rig(obj):
-    base = "data.shirakumo_trial_extra_props"
-    delete_track_for_property(obj, base+".cancelable")
-    delete_track_for_property(obj, base+".invincible")
-    delete_track_for_property(obj, base+".damage_target")
-    delete_track_for_property(obj, base+".stun_target")
-    delete_track_for_property(obj, base+".knock_target")
-    delete_track_for_property(obj, base+".lock_target")
-    delete_track_for_property(obj, base+".lock_camera")
-
-def root_motion_changed(self, context):
+def animation_type_changed(self, context):
     obj = context.object
     if obj.animation_data != None:
-        if self.root_motion == True:
+        if self.type == "PHYSICAL":
             ensure_tracks_for_rig(obj)
+        elif self.type == "BLOCKING":
+            ensure_tracks_for_rig(obj, ["cancelable", "invincible"])
         else:
-            delete_tracks_for_rig(obj)
+            ensure_tracks_for_rig(obj, [])
 
 class SHIRAKUMO_TRIAL_action_properties(bpy.types.PropertyGroup):
-    root_motion: bpy.props.BoolProperty(
-        name="Root Motion",
-        default=False,
-        update=root_motion_changed,
-        description="Whether the engine should translate motion on the root bone to physics motion")
+    type: bpy.props.EnumProperty(
+        name="Type",
+        items=[
+            ("DEFAULT", "Default", "", 1),
+            ("BLOCKING", "Blocking", "", 2),
+            ("PHYSICAL", "Physical", "", 3)
+        ],
+        default="DEFAULT", options=set(),
+        update=animation_type_changed,
+        description="The way this animation is interpreted by the engine")
     velocity_scale: bpy.props.FloatProperty(
         name="Velocity Scale",
         default=1.0, min=0, options=set(),
@@ -91,18 +88,14 @@ class SHIRAKUMO_TRIAL_PT_action_panel(bpy.types.Panel):
         layout.use_property_split = True
         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
         obj = context.object.animation_data.action
-        col = flow.column()
-        col.prop(obj.shirakumo_trial_extra_props, "loop_animation")
+        flow.column().prop(obj.shirakumo_trial_extra_props, "loop_animation")
         col = flow.column()
         col.enabled = not obj.shirakumo_trial_extra_props.loop_animation
         col.prop(obj.shirakumo_trial_extra_props, "next_animation")
-        col = flow.column()
-        col.prop(obj.shirakumo_trial_extra_props, "blend_duration")
-        
-        (header, panel) = flow.panel_prop(obj.shirakumo_trial_extra_props, "root_motion")
-        header.prop(obj.shirakumo_trial_extra_props, "root_motion", expand=False)
-        if panel:
-            panel.prop(obj.shirakumo_trial_extra_props, "velocity_scale")
+        flow.column().prop(obj.shirakumo_trial_extra_props, "blend_duration")
+        flow.column().prop(obj.shirakumo_trial_extra_props, "type")
+        if obj.shirakumo_trial_extra_props.type == "PHYSICAL":
+            flow.column().prop(obj.shirakumo_trial_extra_props, "velocity_scale")
 
 registered_classes = [
     SHIRAKUMO_TRIAL_action_properties,
