@@ -96,6 +96,14 @@ class glTF2ExportUserExtension:
                                    ("checkpoint", args_dict(
                                        ("filter", props.filter, "T"),
                                        ("spawnPoint", list(spawnpoint.matrix_local.translation)))))
+            elif props.type == "PROGRESSION":
+                self.add_extension(gltf2_node,
+                                   ("progressionTrigger", args_dict(
+                                       ("filter", props.filter, "T"),
+                                       ("state", props.state, "progression"),
+                                       ("value", props.value, 1.0),
+                                       ("mode", props.mode, "INC"),
+                                       ("condition", props.condition, "T"))))
             else:
                 self.add_extension(gltf2_node,
                                    ("virtual", props.virtual, False))

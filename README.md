@@ -35,6 +35,14 @@ On object nodes set as physics objects the fields are:
   - ``kill`` A Lisp type expression to match which objects to remove when entering the trigger volume
 - ``checkpoint``
   - ``spawnPoint`` The location at which to respawn after triggering the checkpoint
+- ``progressionTrigger``
+  - ``state`` The state to update. If unset defaults to ``progression``
+  - ``value`` The value to update it with. If unset defaults to ``1``
+  - ``mode`` The mode to determine how to update the state. If unset defaults to ``INC``. Can be one of:
+    - ``INC`` The new value is the ``value`` added to the current state value
+    - ``DEC`` The new value is the ``value`` subtracted from the current state value
+    - ``SET`` The new value is the ``value``
+  - ``condition`` The condition that must be true for the state update to happen. If unset defaults to ``T``. Should be a Lisp expression that evaluates to a boolean.
 
 On animations the fields are:
 

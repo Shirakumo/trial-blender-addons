@@ -26,7 +26,7 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
     
     def draw(self, context):
         layout = self.layout
-        layout.prop(self, 'shape', expand=True)
+        layout.prop(self, 'shape', expand=False)
         layout.prop(self, "filter", expand=True)
         self.customize_layout(layout)
     
@@ -138,6 +138,47 @@ class SHIRAKUMO_TRIAL_OT_add_checkpoint(GenericTrigger):
     def customize_layout(self, layout):
         pass
 
+class SHIRAKUMO_TRIAL_OT_add_progression_trigger(GenericTrigger):
+    bl_idname = "shirakumo_trial.add_progression_trigger"
+    bl_label = "Progression"
+    bl_description = "Construct a progression trigger"
+
+    state: bpy.props.StringProperty(
+        name="State",
+        default="progression",
+        description="The state variable to update")
+    value: bpy.props.FloatProperty(
+        name="Value",
+        default=1.0,
+        description="The value to modify the state by")
+    mode: bpy.props.EnumProperty(
+        name="Mode",
+        items=[
+            ("INC", "+", "", 1),
+            ("DEC", "-", "", 2),
+            ("SET", "=", "", 3),
+        ],
+        default="INC",
+        description="The way to update the state by the value")
+    condition: bpy.props.StringProperty(
+        name="Condition",
+        default="T",
+        description="The condition that must be true for the state update to happen")
+
+    def customize_object(self, obj):
+        obj.shirakumo_trial_physics_props.type = 'PROGRESSION'
+        obj.shirakumo_trial_physics_props.state = self.state
+        obj.shirakumo_trial_physics_props.value = self.value
+        obj.shirakumo_trial_physics_props.mode = self.mode
+        obj.shirakumo_trial_physics_props.condition = self.condition
+
+    def customize_layout(self, layout):
+        layout.prop(self, 'state', expand=True)
+        layout.prop(self, 'value', expand=True)
+        layout.prop(self, 'mode', expand=False)
+        layout.prop(self, 'condition', expand=True)
+        
+
 class SHIRAKUMO_TRIAL_MT_triggers_add(bpy.types.Menu):
     bl_idname = "SHIRAKUMO_TRIAL_MT_triggers_add"
     bl_label = "Triggers"
@@ -149,6 +190,7 @@ class SHIRAKUMO_TRIAL_MT_triggers_add(bpy.types.Menu):
         layout.operator("shirakumo_trial.add_spawner", text="Spawner", icon="GHOST_ENABLED")
         layout.operator("shirakumo_trial.add_kill_volume", text="Kill Volume", icon="GHOST_DISABLED")
         layout.operator("shirakumo_trial.add_checkpoint", text="Checkpoint", icon="CHECKBOX_HLT")
+        layout.operator("shirakumo_trial.add_progression_trigger", text="Progression", icon="TRACKING_FORWARDS")
         
 def menu_func(self, context):
     layout = self.layout
@@ -167,6 +209,7 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
             ("SPAWNER", "Spawner", "GHOST_ENABLED", 2),
             ("KILLVOLUME", "Kill Volume", "GHOST_DISABLED", 3),
             ("CHECKPOINT", "Checkpoint", "CHECKBOX_HLT", 4),
+            ("PROGRESSION", "Progression", "TRACKING_FORWARDS", 5),
         ])
     filter: bpy.props.StringProperty(
         name="Filter",
@@ -200,6 +243,27 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         name="Virtual",
         default=False, options=set(),
         description="If true the object won't be visible, but will be participating in physics interactions")
+    state: bpy.props.StringProperty(
+        name="State",
+        default="progression", options=set(),
+        description="The state variable to update")
+    value: bpy.props.FloatProperty(
+        name="Value",
+        default=1.0, options=set(),
+        description="The value to modify the state by")
+    mode: bpy.props.EnumProperty(
+        name="Mode",
+        items=[
+            ("INC", "+", "", 1),
+            ("DEC", "-", "", 2),
+            ("SET", "=", "", 3),
+        ],
+        default="INC", options=set(),
+        description="The way to update the state by the value")
+    condition: bpy.props.StringProperty(
+        name="Condition",
+        default="T", options=set(),
+        description="The condition that must be true for the state update to happen")
 
 class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
@@ -234,6 +298,11 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
                 flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
             elif obj.shirakumo_trial_physics_props.type == 'CHECKPOINT':
                 pass
+            elif obj.shirakumo_trial_physics_props.type == 'PROGRESSION':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "state")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "value")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "mode")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "condition")
         else:
             flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
 
@@ -242,6 +311,7 @@ registered_classes = [
     SHIRAKUMO_TRIAL_OT_add_spawner,
     SHIRAKUMO_TRIAL_OT_add_kill_volume,
     SHIRAKUMO_TRIAL_OT_add_checkpoint,
+    SHIRAKUMO_TRIAL_OT_add_progression_trigger,
     SHIRAKUMO_TRIAL_MT_triggers_add,
     SHIRAKUMO_TRIAL_physics_properties,
     SHIRAKUMO_TRIAL_PT_physics_panel,
