@@ -170,14 +170,14 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     
     def prepare(self, context, event):
         path = context.scene.shirakumo_trial_file_properties.export_path
+        args = {"check_existing": False,
+                "use_visible": True,
+                "export_lights": True,
+                "export_def_bones": True}
         if path == '' or event.ctrl:
-            self.steps.append(lambda : bpy.ops.export_scene.gltf('INVOKE_DEFAULT',
-                                                                 check_existing=False,
-                                                                 use_visible=True))
+            self.steps.append(lambda : bpy.ops.export_scene.gltf('INVOKE_DEFAULT', **args))
         else:
-            self.steps.append(lambda : bpy.ops.export_scene.gltf(filepath=path,
-                                                                 check_existing=False,
-                                                                 use_visible=True))
+            self.steps.append(lambda : bpy.ops.export_scene.gltf(filepath=path, **args))
 
 class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
     bl_idname = "shirakumo_trial.export_as_object"
