@@ -112,16 +112,17 @@ class glTF2ExportUserExtension:
         data = {"interpolation": "CONSTANT",
                 "times": [],
                 "values": []}
+        ## KLUDGE: hard-coding 60 FPS
         if fcurve.keyframe_points[0].co[0] != range[0]:
-            data["times"].append(range[0])
-            data["values"].append(fcurve.keyframe_points[0].co[1])
+            data["times"].append(float(range[0]) / 60.0)
+            data["values"].append(float(fcurve.keyframe_points[0].co[1]))
         for point in fcurve.keyframe_points:
             data["interpolation"] = point.interpolation
-            data["times"].append(point.co[0])
-            data["values"].append(point.co[1])
+            data["times"].append(float(point.co[0]) / 60.0)
+            data["values"].append(float(point.co[1]))
         if fcurve.keyframe_points[-1].co[0] != range[1]:
-            data["times"].append(range[1])
-            data["values"].append(fcurve.keyframe_points[-1].co[1])
+            data["times"].append(float(range[1]) / 60.0)
+            data["values"].append(float(fcurve.keyframe_points[-1].co[1]))
         return data
 
     def gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings):
