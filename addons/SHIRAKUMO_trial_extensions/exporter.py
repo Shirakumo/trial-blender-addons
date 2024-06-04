@@ -108,16 +108,43 @@ class glTF2ExportUserExtension:
                 self.add_extension(gltf2_node,
                                    ("virtual", props.virtual, False))
 
+    def encode_fcurve(self, fcurve, range):
+        data = {"interpolation": "CONSTANT",
+                "times": [],
+                "values": []}
+        if fcurve.keyframe_points[0].co[0] != range[0]:
+            data["times"].append(range[0])
+            data["values"].append(fcurve.keyframe_points[0].co[1])
+        for point in fcurve.keyframe_points:
+            data["interpolation"] = point.interpolation
+            data["times"].append(point.co[0])
+            data["values"].append(point.co[1])
+        if fcurve.keyframe_points[-1].co[0] != range[1]:
+            data["times"].append(range[1])
+            data["values"].append(fcurve.keyframe_points[-1].co[1])
+        return data
+
     def gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings):
         if not self.properties.enabled:
             return
+        ## KLUDGE: Ideally we shouldn't do it like this and instead use the proper
+        ##         glTF animations channels, but I have no idea how to hook into that
+        ##         so....
+        extra_tracks = {}
+        base = "data.shirakumo_trial_extra_props."
+        for fcurve in blender_action.fcurves:
+            if fcurve.data_path.startswith(base):
+                name = fcurve.data_path[len(base):]
+                extra_tracks[name] = self.encode_fcurve(fcurve, blender_action.frame_range)
+        
         props = blender_action.shirakumo_trial_extra_props
         self.add_extension(gltf2_animation,
                            ("type", props.type, "DEFAULT"),
                            ("velocityScale", props.velocity_scale, 1.0),
                            ("loop", props.loop_animation, True),
                            ("next", props.next_animation, ""),
-                           ("blendDuration", props.blend_duration, 0.2))
+                           ("blendDuration", props.blend_duration, 0.2),
+                           ("extraTracks", extra_tracks))
 
 class SHIRAKUMO_TRIAL_exporter_properties(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(
