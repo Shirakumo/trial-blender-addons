@@ -43,6 +43,16 @@ On object nodes set as physics objects the fields are:
     - ``DEC`` The new value is the ``value`` subtracted from the current state value
     - ``SET`` The new value is the ``value``
   - ``condition`` The condition that must be true for the state update to happen. If unset defaults to ``T``. Should be a Lisp expression that evaluates to a boolean.
+- ``cameraTrigger``
+  - ``state`` What state the camera should be in once hitting this trigger. Can be one of:
+    - ``FREE`` The camera can be freely moved by the player
+    - ``FIXED`` The camera is in a fixed offset to its target
+    - ``ANIMATED`` The camera follows the path and orientation encoded in the animation named by ``target``
+  - ``target`` The name of the object to target. If unset, don't change the target.
+  - ``offset`` The offset of the camera to the target as a triplet of coordinates:
+    1. ``DISTANCE`` The distance between the camera and the target
+    2. ``ANGLE`` The angle on the world XZ plane that the camera is at
+    3. ``HEIGHT`` The angle of the camera on the Y quadrant above the XZ plane
 
 On animations the fields are:
 

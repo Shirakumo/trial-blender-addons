@@ -104,6 +104,13 @@ class glTF2ExportUserExtension:
                                        ("value", props.value, 1.0),
                                        ("mode", props.mode, "INC"),
                                        ("condition", props.condition, "T"))))
+            elif props.type == "CAMERA":
+                self.add_extension(gltf2_node,
+                                   ("cameraTrigger", args_dict(
+                                       ("state", props.camera_state, "FREE"),
+                                       ("target", props.target, ""),
+                                       ## FIXME: actually implement the offset
+                                       ("offset", props.offset, [0,0,0]))))
             else:
                 self.add_extension(gltf2_node,
                                    ("virtual", props.virtual, False))

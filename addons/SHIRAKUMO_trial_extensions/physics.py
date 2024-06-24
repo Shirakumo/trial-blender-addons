@@ -1,5 +1,6 @@
 import bpy
 from bpy_extras import object_utils
+from math import radians
 
 class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
@@ -177,6 +178,49 @@ class SHIRAKUMO_TRIAL_OT_add_progression_trigger(GenericTrigger):
         layout.prop(self, 'value', expand=True)
         layout.prop(self, 'mode', expand=False)
         layout.prop(self, 'condition', expand=True)
+
+class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
+    bl_idname = "shirakumo_trial.add_camera_trigger"
+    bl_label = "Camera"
+    bl_description = "Construct a camera trigger"
+    
+    camera_state: bpy.props.EnumProperty(
+        name="State",
+        items=[
+            ("FREE", "Free", "", 1),
+            ("FIXED", "Fixed", "", 2),
+            ("ANIMATED", "Animated", "", 3),
+        ],
+        default="FREE",
+        description="The state to switch the camera into")
+    target: bpy.props.StringProperty(
+        name="Target",
+        default="",
+        description="The target of the camera change")
+
+    def customize_object(self, obj):
+        obj.shirakumo_trial_physics_props.type = 'CAMERA'
+        obj.shirakumo_trial_physics_props.camera_state = self.camera_state
+        obj.shirakumo_trial_physics_props.target = self.target
+        pivot = bpy.data.objects.new('CameraPivot', None)
+        obj.users_collection[0].objects.link(pivot)
+        pivot.empty_display_type = 'CIRCLE'
+        pivot.location = obj.location
+        pivot.rotation_euler = (radians(90), 0, 0)
+        pivot.scale = [1.5,1.5,1.5]
+        pivot.parent = obj
+        pointer = bpy.data.objects.new('CameraPivotPointer', None)
+        obj.users_collection[0].objects.link(pointer)
+        pointer.empty_display_type = 'SINGLE_ARROW'
+        pointer.location = pivot.location
+        pointer.location[0] += 1
+        pointer.rotation_euler = (0, radians(-90), 0)
+        pointer.scale = [0.5,0.5,0.5]
+        pointer.parent = pivot
+
+    def customize_layout(self, layout):
+        layout.prop(self, 'camera_state', expand=True)
+        layout.prop(self, 'target', expand=True)
         
 
 class SHIRAKUMO_TRIAL_MT_triggers_add(bpy.types.Menu):
@@ -191,6 +235,7 @@ class SHIRAKUMO_TRIAL_MT_triggers_add(bpy.types.Menu):
         layout.operator("shirakumo_trial.add_kill_volume", text="Kill Volume", icon="GHOST_DISABLED")
         layout.operator("shirakumo_trial.add_checkpoint", text="Checkpoint", icon="CHECKBOX_HLT")
         layout.operator("shirakumo_trial.add_progression_trigger", text="Progression", icon="TRACKING_FORWARDS")
+        layout.operator("shirakumo_trial.add_camera_trigger", text="Camera", icon="VIEW_CAMERA")
         
 def menu_func(self, context):
     layout = self.layout
@@ -210,6 +255,7 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
             ("KILLVOLUME", "Kill Volume", "GHOST_DISABLED", 3),
             ("CHECKPOINT", "Checkpoint", "CHECKBOX_HLT", 4),
             ("PROGRESSION", "Progression", "TRACKING_FORWARDS", 5),
+            ("CAMERA", "Camera", "VIEW_CAMERA", 6),
         ])
     filter: bpy.props.StringProperty(
         name="Filter",
@@ -264,6 +310,19 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         name="Condition",
         default="T", options=set(),
         description="The condition that must be true for the state update to happen")
+    camera_state: bpy.props.EnumProperty(
+        name="State",
+        items=[
+            ("FREE", "Free", "", 1),
+            ("FIXED", "Fixed", "", 2),
+            ("ANIMATED", "Animated", "", 3),
+        ],
+        default="FREE", options=set(),
+        description="The state to switch the camera into")
+    target: bpy.props.StringProperty(
+        name="Target",
+        default="", options=set(),
+        description="The target of the camera change")
 
 class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
@@ -303,6 +362,10 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
                 flow.column().prop(obj.shirakumo_trial_physics_props, "value")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "mode")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "condition")
+            elif obj.shirakumo_trial_physics_props.type == 'CAMERA':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "camera_state")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "target")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "offset")
         else:
             flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
 
@@ -312,6 +375,7 @@ registered_classes = [
     SHIRAKUMO_TRIAL_OT_add_kill_volume,
     SHIRAKUMO_TRIAL_OT_add_checkpoint,
     SHIRAKUMO_TRIAL_OT_add_progression_trigger,
+    SHIRAKUMO_TRIAL_OT_add_camera_trigger,
     SHIRAKUMO_TRIAL_MT_triggers_add,
     SHIRAKUMO_TRIAL_physics_properties,
     SHIRAKUMO_TRIAL_PT_physics_panel,
