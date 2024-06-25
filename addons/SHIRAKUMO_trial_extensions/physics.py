@@ -1,6 +1,6 @@
 import bpy
 from bpy_extras import object_utils
-from math import radians
+from math import radians,cos
 
 class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
@@ -207,7 +207,6 @@ class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
         pivot.empty_display_type = 'CIRCLE'
         pivot.location = obj.location
         pivot.rotation_euler = (radians(90), 0, 0)
-        pivot.scale = [1.5,1.5,1.5]
         pivot.parent = obj
         pointer = bpy.data.objects.new('CameraPivotPointer', None)
         obj.users_collection[0].objects.link(pointer)
@@ -217,6 +216,11 @@ class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
         pointer.rotation_euler = (0, radians(-90), 0)
         pointer.scale = [0.5,0.5,0.5]
         pointer.parent = pivot
+        # Apply defaults
+        default = bpy.context.scene.shirakumo_trial_file_properties.default_camera_offset
+        pivot.location[2] += default[0]*cos(default[2])
+        pivot.rotation_euler[2] = default[1]
+        pivot.scale = [default[0], default[0], default[0]]
 
     def customize_layout(self, layout):
         layout.prop(self, 'camera_state', expand=True)
