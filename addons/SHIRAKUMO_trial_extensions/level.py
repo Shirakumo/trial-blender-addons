@@ -224,6 +224,10 @@ class SHIRAKUMO_TRIAL_file_properties(bpy.types.PropertyGroup):
         name="Export Path",
         default="", subtype='FILE_PATH', options=set(),
         description="The path to export to with the ReExport button")
+    default_camera_offset: bpy.props.FloatVectorProperty(
+        name="Default Camera Trigger Offset",
+        default=[5,0,1.4137166], subtype='EULER', options=set(),
+        description="The default offset of camera triggers")
 
 registered_classes = [
     SHIRAKUMO_TRIAL_OT_rebake,

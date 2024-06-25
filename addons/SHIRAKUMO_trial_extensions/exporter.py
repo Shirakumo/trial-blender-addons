@@ -1,6 +1,6 @@
 import bpy
 import os
-from typing import Dict
+from math import atan2
 from io_scene_gltf2.io.com import gltf2_io
 
 def args_dict(*args):
@@ -105,12 +105,16 @@ class glTF2ExportUserExtension:
                                        ("mode", props.mode, "INC"),
                                        ("condition", props.condition, "T"))))
             elif props.type == "CAMERA":
+                pivot = blender_object.children[0]
+                if not pivot: return
+                pivot = [pivot.scale[0],
+                         pivot.rotation_euler[2],
+                         atan2(pivot.location[2], pivot.scale[0])]
                 self.add_extension(gltf2_node,
                                    ("cameraTrigger", args_dict(
                                        ("state", props.camera_state, "FREE"),
                                        ("target", props.target, ""),
-                                       ## FIXME: actually implement the offset
-                                       ("offset", props.offset, [0,0,0]))))
+                                       ("offset", pivot, [0,0,0]))))
             else:
                 self.add_extension(gltf2_node,
                                    ("virtual", props.virtual, False))
