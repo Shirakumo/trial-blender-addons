@@ -16,6 +16,8 @@ def args_dict(*args):
 
 class glTF2ExportUserExtension:
     name = "SHIRAKUMO_trial"
+    ## KLUDGE: hard-coding 60 FPS
+    framerate = 60
 
     def __init__(self):
         from io_scene_gltf2.io.com.gltf2_io_extensions import Extension
@@ -123,9 +125,8 @@ class glTF2ExportUserExtension:
         data = {"interpolation": "CONSTANT",
                 "times": [],
                 "values": []}
-        ## KLUDGE: hard-coding 60 FPS
         if fcurve.keyframe_points[0].co[0] != range[0]:
-            data["times"].append(float(range[0]) / 60.0)
+            data["times"].append(float(range[0]) / self.framerate)
             data["values"].append(float(fcurve.keyframe_points[0].co[1]))
         for point in fcurve.keyframe_points:
             data["interpolation"] = point.interpolation
@@ -148,6 +149,28 @@ class glTF2ExportUserExtension:
             if fcurve.data_path.startswith(base):
                 name = fcurve.data_path[len(base):]
                 extra_tracks[name] = self.encode_fcurve(fcurve, blender_action.frame_range)
+        effects = []
+        for marker in blender_action.pose_markers:
+            if marker.name.startswith("["):
+                name = marker.name[1:].strip()
+                pair = None
+                for marker in blender_action.pose_markers:
+                    if marker.name.endswith("]") and marker.name[:-1].strip() == name:
+                        pair = marker
+                        break
+                if pair == None:
+                    print("Unmatched open marker pair: "+marker.name)
+                else:
+                    effects.append({
+                        "start": float(marker.frame) / self.framerate,
+                        "end": float(pair.frame) / self.framerate,
+                        "effect": name})
+            elif marker.name.endswith("]"):
+                pass
+            else:
+                effects.append({
+                    "start": float(marker.frame) / self.framerate,
+                    "effect": marker.name})
         
         props = blender_action.shirakumo_trial_extra_props
         self.add_extension(gltf2_animation,
@@ -156,7 +179,8 @@ class glTF2ExportUserExtension:
                            ("loop", props.loop_animation, True),
                            ("next", props.next_animation, ""),
                            ("blendDuration", props.blend_duration, 0.2),
-                           ("extraTracks", extra_tracks))
+                           ("extraTracks", extra_tracks),
+                           ("effects", effects, []))
 
 class SHIRAKUMO_TRIAL_exporter_properties(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(
