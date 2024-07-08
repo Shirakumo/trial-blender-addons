@@ -64,6 +64,10 @@ On animations the fields are:
 - ``loop`` Whether the animation should loop or not
 - ``next`` The name of the animation to queue after this one
 - ``blendDuration`` The default duration (in seconds) to use when blending to this animation
+- ``effects`` An array of effects triggers, with each element being an effect description:
+  - ``start`` The point in time during the animation at which the effect should be started
+  - ``end`` The point in time during the animation at which the effect should be stopped. Can be omitted.
+  - ``effect`` The name of the effect to trigger.
 
 On scenes the fields are:
 
