@@ -249,17 +249,28 @@ def menu_func(self, context):
     layout.separator()
     layout.menu("SHIRAKUMO_TRIAL_MT_triggers_add", text="Triggers", icon="DECORATE")
 
-def trigger_icon(trigger):
-    if trigger.type == "NONE": return ""
-    if trigger.type == "TRIGGER": return "\u0021"
-    if trigger.type == "SPAWNER": return "\uf019"
-    if trigger.type == "KILLVOLUME": return "\uf6e2"
-    if trigger.type == "CHECKPOINT": return "\uf058"
-    if trigger.type == "PROGRESSION":return "\uf0ae"
-    if trigger.type == "CAMERA":
-        if trigger.camera_state == "FREE": return "\ue0d8"
-        if trigger.camera_state == "FIXED": return "\uf030"
-        if trigger.camera_state == "ANIMATED": return "\ue131"
+def trigger_icon(obj):
+    props = obj.shirakumo_trial_physics_props
+    if props.type == "NONE": return ""
+    if props.type == "TRIGGER":
+        return "\uf06a"
+    if props.type == "SPAWNER":
+        if not props.auto_deactivate: return "\uf1b8"
+        return "\uf019"
+    if props.type == "KILLVOLUME":
+        return "\uf714"
+    if props.type == "CHECKPOINT":
+        if obj.name == "Start": return "\uf144"
+        if obj.name == "End": return "\uf11e"
+        return "\uf058"
+    if props.type == "PROGRESSION":
+        if props.mode == "INC": return "\uf051"
+        if props.mode == "DEC": return "\uf048"
+        return "\uf0ae"
+    if props.type == "CAMERA":
+        if props.camera_state == "FREE": return "\ue0d8"
+        if props.camera_state == "ANIMATED": return "\ue131"
+        return "\uf030"
     return ""
 
 class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
@@ -408,7 +419,7 @@ class SHIRAKUMO_TRIAL_viewport_render:
             return
         if obj.shirakumo_trial_physics_props.type == 'NONE':
             return
-        icon = trigger_icon(obj.shirakumo_trial_physics_props)
+        icon = trigger_icon(obj)
         if icon != "":
             # We have to reload the font here because for **whatever reason** the font gets FUCKED when
             # you load a new scene, and this is the easiest way to fix it back up. Sigh.
