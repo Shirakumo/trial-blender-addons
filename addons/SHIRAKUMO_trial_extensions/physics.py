@@ -249,15 +249,18 @@ def menu_func(self, context):
     layout.separator()
     layout.menu("SHIRAKUMO_TRIAL_MT_triggers_add", text="Triggers", icon="DECORATE")
 
-trigger_type_icons = {
-    "NONE": "",
-    "TRIGGER":     "\u0021",
-    "SPAWNER":     "\uf055",
-    "KILLVOLUME":  "\uf6e2",
-    "CHECKPOINT":  "\uf058",
-    "PROGRESSION": "\uf0ae",
-    "CAMERA":      "\uf030",
-}
+def trigger_icon(trigger):
+    if trigger.type == "NONE": return ""
+    if trigger.type == "TRIGGER": return "\u0021"
+    if trigger.type == "SPAWNER": return "\uf019"
+    if trigger.type == "KILLVOLUME": return "\uf6e2"
+    if trigger.type == "CHECKPOINT": return "\uf058"
+    if trigger.type == "PROGRESSION":return "\uf0ae"
+    if trigger.type == "CAMERA":
+        if trigger.camera_state == "FREE": return "\ue0d8"
+        if trigger.camera_state == "FIXED": return "\uf030"
+        if trigger.camera_state == "ANIMATED": return "\ue131"
+    return ""
 
 class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
     type: bpy.props.EnumProperty(
@@ -390,14 +393,9 @@ class SHIRAKUMO_TRIAL_viewport_render:
     def __init__(self):
         self.icon_size = 100.0
         self.font = None
+        self.fontpath = os.path.dirname(__file__)+'/fontawesome.ttf'
         if not bpy.app.background:
-            fontpath = os.path.dirname(__file__)+'/fontawesome.ttf'
-            res = blf.load(fontpath)
-            if res == -1:
-                print("Failed to load font from "+fontpath)
-            else:
-                self.font = res
-            blf.size(self.font, self.icon_size)
+            self.font = blf.load(self.fontpath)
 
     def draw_all(self):
         if self.font == None:
@@ -410,10 +408,14 @@ class SHIRAKUMO_TRIAL_viewport_render:
             return
         if obj.shirakumo_trial_physics_props.type == 'NONE':
             return
-        icon = trigger_type_icons[obj.shirakumo_trial_physics_props.type]
+        icon = trigger_icon(obj.shirakumo_trial_physics_props)
         if icon != "":
+            # We have to reload the font here because for **whatever reason** the font gets FUCKED when
+            # you load a new scene, and this is the easiest way to fix it back up. Sigh.
+            self.font = blf.load(self.fontpath)
             position = view3d_utils.location_3d_to_region_2d(bpy.context.region, bpy.context.space_data.region_3d, obj.location)
             (w,h) = blf.dimensions(self.font, icon)
+            blf.size(self.font, self.icon_size)
             blf.position(self.font, position[0]-w/2, position[1]-h/2, 0)
             if obj.select_get():
                 blf.color(self.font, 1, 0.75, 0, 1.0)
