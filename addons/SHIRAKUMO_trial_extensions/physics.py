@@ -1,5 +1,7 @@
 import bpy
-from bpy_extras import object_utils
+import blf
+import os
+from bpy_extras import object_utils,view3d_utils
 from math import radians,cos
 
 class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
@@ -247,6 +249,16 @@ def menu_func(self, context):
     layout.separator()
     layout.menu("SHIRAKUMO_TRIAL_MT_triggers_add", text="Triggers", icon="DECORATE")
 
+trigger_type_icons = {
+    "NONE": "",
+    "TRIGGER":     "\u0021",
+    "SPAWNER":     "\uf055",
+    "KILLVOLUME":  "\uf6e2",
+    "CHECKPOINT":  "\uf058",
+    "PROGRESSION": "\uf0ae",
+    "CAMERA":      "\uf030",
+}
+
 class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
     type: bpy.props.EnumProperty(
         name="Type",
@@ -373,6 +385,44 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
         else:
             flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
 
+class SHIRAKUMO_TRIAL_viewport_render:
+    
+    def __init__(self):
+        self.icon_size = 100.0
+        self.font = None
+        if not bpy.app.background:
+            fontpath = os.path.dirname(__file__)+'/fontawesome.ttf'
+            res = blf.load(fontpath)
+            if res == -1:
+                print("Failed to load font from "+fontpath)
+            else:
+                self.font = res
+            blf.size(self.font, self.icon_size)
+
+    def draw_all(self):
+        if self.font == None:
+            return
+        for obj in bpy.data.objects:
+            self.draw(obj)
+    
+    def draw(self, obj):
+        if self.font == None:
+            return
+        if obj.shirakumo_trial_physics_props.type == 'NONE':
+            return
+        icon = trigger_type_icons[obj.shirakumo_trial_physics_props.type]
+        if icon != "":
+            position = view3d_utils.location_3d_to_region_2d(bpy.context.region, bpy.context.space_data.region_3d, obj.location)
+            (w,h) = blf.dimensions(self.font, icon)
+            blf.position(self.font, position[0]-w/2, position[1]-h/2, 0)
+            if obj.select_get():
+                blf.color(self.font, 1, 0.75, 0, 1.0)
+            else:
+                blf.color(self.font, 0, 0, 0, 0.5)
+            blf.draw(self.font, icon)
+        
+viewport_render = SHIRAKUMO_TRIAL_viewport_render()
+
 registered_classes = [
     SHIRAKUMO_TRIAL_OT_add_trigger,
     SHIRAKUMO_TRIAL_OT_add_spawner,
@@ -391,10 +441,16 @@ def register():
     bpy.types.VIEW3D_MT_add.append(menu_func)
     bpy.types.Object.shirakumo_trial_physics_props = bpy.props.PointerProperty(
         type=SHIRAKUMO_TRIAL_physics_properties)
+    global draw_handler
+    draw_handler = bpy.types.SpaceView3D.draw_handler_add(
+        viewport_render.draw_all, (), "WINDOW", "POST_PIXEL")
 
 def unregister():
     del bpy.types.Object.shirakumo_trial_physics_props
     bpy.types.VIEW3D_MT_add.remove(menu_func)
     for cls in registered_classes:
         bpy.utils.unregister_class(cls)
+    global draw_handler
+    bpy.types.SpaceView3D.draw_handler_remove(draw_handler, "WINDOW")
+    draw_handler = None
     
