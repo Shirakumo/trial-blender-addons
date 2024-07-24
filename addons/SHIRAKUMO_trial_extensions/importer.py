@@ -40,18 +40,12 @@ class GLTF_PT_SHIRAKUMO_TRIAL_ImportExtensionPanel(bpy.types.Panel):
         layout.active = props.enabled
 
 def register():
-    try:
-        bpy.utils.register_class(GLTF_PT_SHIRAKUMO_TRIAL_ImportExtensionPanel)
-        bpy.utils.register_class(SHIRAKUMO_TRIAL_importer_properties)
-        bpy.types.Scene.shirakumo_trial_importer_props = bpy.props.PointerProperty(
-            type=SHIRAKUMO_TRIAL_importer_properties)
-    except:
-        pass
+    #bpy.utils.register_class(GLTF_PT_SHIRAKUMO_TRIAL_ImportExtensionPanel)
+    bpy.utils.register_class(SHIRAKUMO_TRIAL_importer_properties)
+    bpy.types.Scene.shirakumo_trial_importer_props = bpy.props.PointerProperty(
+        type=SHIRAKUMO_TRIAL_importer_properties)
 
 def unregister():
-    try:
-        bpy.utils.unregister_class(GLTF_PT_SHIRAKUMO_TRIAL_ImportExtensionPanel)
-        bpy.utils.unregister_class(SHIRAKUMO_TRIAL_importer_properties)
-        del bpy.types.Scene.shirakumo_trial_importer_props
-    except:
-        pass
+    #bpy.utils.unregister_class(GLTF_PT_SHIRAKUMO_TRIAL_ImportExtensionPanel)
+    bpy.utils.unregister_class(SHIRAKUMO_TRIAL_importer_properties)
+    del bpy.types.Scene.shirakumo_trial_importer_props
