@@ -19,7 +19,6 @@ jobs:
         with:
           repository: KhronosGroup/glTF-Blender-IO
           path: gltf_io
-          branch: KHR_animation_pointer
       - name: Build ZIP files
         run: |
           cd $GITHUB_WORKSPACE/trial/addons/
