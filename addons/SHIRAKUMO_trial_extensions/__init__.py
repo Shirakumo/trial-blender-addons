@@ -4,8 +4,6 @@ from . import animations
 from . import physics
 from . import exporter
 from . import importer
-from .exporter import glTF2ExportUserExtension
-from .importer import glTF2ImportUserExtension
 
 bl_info = {
     "name": "SHIRAKUMO_trial_extensions",
@@ -38,3 +36,6 @@ def unregister():
 
 if __name__ == "__main__":
     register()
+
+from .exporter import glTF2ExportUserExtension
+from .importer import glTF2ImportUserExtension
