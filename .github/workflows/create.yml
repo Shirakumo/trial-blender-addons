@@ -14,6 +14,7 @@ jobs:
         with:
           repository: shirakumo/glTF_Physics_Blender_Exporter
           path: gltf_physics
+          branch: blender4.2
       - name: Checkout gltf io
         uses: actions/checkout@v4
         with:
