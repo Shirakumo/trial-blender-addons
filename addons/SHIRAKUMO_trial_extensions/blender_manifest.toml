@@ -1,0 +1,13 @@
+schema_version = "0.1.0"
+id = "SHIRAKUMO_trial_extensions"
+name = "Shirakumo Trial Extensions"
+version = "0.0.1"
+tagline = ""
+maintainer = "Yukari Hafner"
+type = "add-on"
+permissions = ["files"]
+tags = ["Import-Export"]
+blender_version_min = "4.2.0"
+license = ["SPDX:zlib"]
+website = "https://github.com/Shirakumo/blender-addons/"
+copyright = ["Yukari Hafner"]
