@@ -358,6 +358,10 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         name="Target",
         default="", options=set(),
         description="The target of the camera change")
+    offset: bpy.props.FloatVectorProperty(
+        name="Offset",
+        default=[0,0,0], subtype='EULER', options=set(),
+        description="The offset of camera triggers")
 
 class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
