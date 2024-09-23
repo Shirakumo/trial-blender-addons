@@ -407,7 +407,7 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
 class SHIRAKUMO_TRIAL_viewport_render:
     
     def __init__(self):
-        self.icon_size = 100.0
+        self.icon_size = 50.0
         self.font = None
         self.fontpath = os.path.dirname(__file__)+'/fontawesome.ttf'
         if not bpy.app.background:
@@ -434,7 +434,7 @@ class SHIRAKUMO_TRIAL_viewport_render:
             blf.size(self.font, self.icon_size)
             blf.position(self.font, position[0]-w/2, position[1]-h/2, 0)
             if obj.select_get():
-                blf.color(self.font, 1, 0.75, 0, 1.0)
+                blf.color(self.font, 1, 0.75, 0, 0.75)
             else:
                 blf.color(self.font, 0, 0, 0, 0.5)
             blf.draw(self.font, icon)
