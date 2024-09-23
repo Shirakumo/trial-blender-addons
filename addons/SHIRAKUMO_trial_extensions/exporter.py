@@ -116,7 +116,7 @@ class glTF2ExportUserExtension:
                              atan2(pivot.location[2], pivot.scale[0])]
                 self.add_extension(gltf2_node,
                                    ("cameraTrigger", args_dict(
-                                       ("state", props.camera_state, "FREE"),
+                                       ("state", props.camera_state),
                                        ("target", props.target, ""),
                                        ("offset", pivot, [0,0,0]))))
             else:
