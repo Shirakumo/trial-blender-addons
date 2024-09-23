@@ -4,6 +4,11 @@ import os
 from bpy_extras import object_utils,view3d_utils
 from math import radians,cos
 
+def link_to_object_collection(obj, new):
+    for collection in obj.users_collection:
+        if collection.name != 'RigidBodyWorld':
+            collection.objects.link(new)
+
 class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     
@@ -133,7 +138,7 @@ class SHIRAKUMO_TRIAL_OT_add_checkpoint(GenericTrigger):
     def customize_object(self, obj):
         obj.shirakumo_trial_physics_props.type = 'CHECKPOINT'
         child = bpy.data.objects.new('Spawnpoint', None)
-        obj.users_collection[0].objects.link(child)
+        link_to_object_collection(obj, child)
         child.empty_display_type = 'SINGLE_ARROW'
         child.location = obj.location
         child.parent = obj
@@ -205,13 +210,13 @@ class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
         obj.shirakumo_trial_physics_props.camera_state = self.camera_state
         obj.shirakumo_trial_physics_props.target = self.target
         pivot = bpy.data.objects.new('CameraPivot', None)
-        obj.users_collection[0].objects.link(pivot)
+        link_to_object_collection(obj, pivot)
         pivot.empty_display_type = 'CIRCLE'
         pivot.location = obj.location
         pivot.rotation_euler = (radians(90), 0, 0)
         pivot.parent = obj
         pointer = bpy.data.objects.new('CameraPivotPointer', None)
-        obj.users_collection[0].objects.link(pointer)
+        link_to_object_collection(obj, pointer)
         pointer.empty_display_type = 'SINGLE_ARROW'
         pointer.location = pivot.location
         pointer.location[0] += 1
