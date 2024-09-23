@@ -92,12 +92,13 @@ class glTF2ExportUserExtension:
                                        ("filter", props.filter, "T"),
                                        ("kill", props.kill_type))))
             elif props.type == "CHECKPOINT":
-                spawnpoint = blender_object.children[0]
-                if not spawnpoint: return
+                spawnpoint = [0,0,0]
+                if 0 < len(blender_object.children) and blender_object.children[0]:
+                    spawnpoint = list(blender_object.children[0].matrix_local.translation)
                 self.add_extension(gltf2_node,
                                    ("checkpoint", args_dict(
                                        ("filter", props.filter, "T"),
-                                       ("spawnPoint", list(spawnpoint.matrix_local.translation)))))
+                                       ("spawnPoint", spawnpoint, [0,0,0]))))
             elif props.type == "PROGRESSION":
                 self.add_extension(gltf2_node,
                                    ("progressionTrigger", args_dict(
@@ -107,11 +108,12 @@ class glTF2ExportUserExtension:
                                        ("mode", props.mode, "INC"),
                                        ("condition", props.condition, "T"))))
             elif props.type == "CAMERA":
-                pivot = blender_object.children[0]
-                if not pivot: return
-                pivot = [pivot.scale[0],
-                         pivot.rotation_euler[2],
-                         atan2(pivot.location[2], pivot.scale[0])]
+                pivot = [0,0,0]
+                if 0 < len(blender_object.children) and blender_object.children[0]:
+                    pivot = blender_object.children[0]
+                    pivot = [pivot.scale[0],
+                             pivot.rotation_euler[2],
+                             atan2(pivot.location[2], pivot.scale[0])]
                 self.add_extension(gltf2_node,
                                    ("cameraTrigger", args_dict(
                                        ("state", props.camera_state, "FREE"),
