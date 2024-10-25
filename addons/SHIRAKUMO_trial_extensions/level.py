@@ -67,6 +67,7 @@ def ensure_ao_material(obj, size=None, resize=False):
             size = int(ao_map_resolution*sqrt(object_surface_area(obj)))
         if img.size[0] != size:
             img.scale(size, size)
+    return size
 
 def ensure_physics_object(obj):
     if not obj.rigid_body:
@@ -82,10 +83,10 @@ def rebake_object(obj, resize=True):
         obj.hide_render = False
 
     with Selection([obj]) as sel:
-        ensure_ao_material(obj, None, resize)
+        size = ensure_ao_material(obj, None, resize)
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.uv.smart_project(island_margin=0.001)
+        bpy.ops.uv.smart_project(island_margin=1/size)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.context.scene.render.engine = 'CYCLES'
         bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', use_clear=True)
