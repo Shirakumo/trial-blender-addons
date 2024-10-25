@@ -139,7 +139,7 @@ class SHIRAKUMO_TRIAL_OT_add_checkpoint(GenericTrigger):
         obj.shirakumo_trial_physics_props.type = 'CHECKPOINT'
         child = bpy.data.objects.new('Spawnpoint', None)
         link_to_object_collection(obj, child)
-        child.empty_display_type = 'SINGLE_ARROW'
+        child.empty_display_type = 'ARROWS'
         child.location = obj.location
         child.parent = obj
         
