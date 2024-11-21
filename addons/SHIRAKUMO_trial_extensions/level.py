@@ -35,8 +35,7 @@ def hide_all(filter):
 def is_bakable_object(obj):
     return (obj.type == 'MESH' and
             (not obj.rigid_body or
-             not obj.khr_physics_extra_props or
-             not obj.khr_physics_extra_props.is_trigger))
+             not obj.khr_physics_extra_props))
 
 def object_surface_area(obj):
     bm = bmesh.new()

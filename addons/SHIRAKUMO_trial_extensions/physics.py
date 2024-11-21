@@ -52,7 +52,6 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
         obj.display_type = "BOUNDS"
         obj.display_bounds_type = self.shape
         obj.rigid_body.collision_shape = self.shape
-        obj.khr_physics_extra_props.is_trigger = True
         obj.shirakumo_trial_physics_props.filter = self.filter
         self.customize_object(obj)
         
@@ -276,6 +275,12 @@ def trigger_icon(obj):
         if props.camera_state == "FREE": return "\ue0d8"
         if props.camera_state == "ANIMATED": return "\ue131"
         return "\uf030"
+    if props.type == "INTERACTABLE":
+        if props.interaction_kind == "PICKUP": return "\uf4be"
+        if props.interaction_kind == "INSPECTABLE": return "\uf002"
+        if props.interaction_kind == "USABLE": return "\uf25a"
+        if props.interaction_kind == "BUTTON": return "\uf25a"
+        return "\uf256"
     return ""
 
 class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
@@ -291,6 +296,7 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
             ("CHECKPOINT", "Checkpoint", "CHECKBOX_HLT", 4),
             ("PROGRESSION", "Progression", "TRACKING_FORWARDS", 5),
             ("CAMERA", "Camera", "VIEW_CAMERA", 6),
+            ("INTERACTABLE", "Interactable", "VIEWZOOM", 7),
         ])
     filter: bpy.props.StringProperty(
         name="Filter",
@@ -362,6 +368,20 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         name="Offset",
         default=[0,0,0], subtype='EULER', options=set(),
         description="The offset of camera triggers")
+    interaction: bpy.props.StringProperty(
+        name="Interaction",
+        default="", options=set(),
+        description="The interaction to trigger for the object.")
+    interaction_kind: bpy.props.EnumProperty(
+        name="Kind",
+        items=[
+            ("PICKUP", "Pickup", "", 1),
+            ("INSPECTABLE", "Inspectable", "", 2),
+            ("USABLE", "Usable", "", 3),
+            ("BUTTON", "Button", "", 4),
+        ],
+        default="INSPECTABLE", options=set(),
+        description="The kind of interaction to trigger")
 
 class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
     bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
@@ -382,31 +402,35 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
         layout.use_property_split = True
         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
 
-        if context.object.khr_physics_extra_props.is_trigger:
-            flow.column().prop(obj.shirakumo_trial_physics_props, "type")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
-            if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "form")
-            elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
-            elif obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
-            elif obj.shirakumo_trial_physics_props.type == 'CHECKPOINT':
-                pass
-            elif obj.shirakumo_trial_physics_props.type == 'PROGRESSION':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "state")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "value")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "mode")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "condition")
-            elif obj.shirakumo_trial_physics_props.type == 'CAMERA':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "camera_state")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "target")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "offset")
-        else:
+        flow.column().prop(obj.shirakumo_trial_physics_props, "type")
+        if obj.shirakumo_trial_physics_props.type in ['NONE', 'INTERACTABLE']:
             flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
+        else:
+            flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
+        if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "form")
+        elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
+        elif obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
+        elif obj.shirakumo_trial_physics_props.type == 'CHECKPOINT':
+            pass
+        elif obj.shirakumo_trial_physics_props.type == 'PROGRESSION':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "state")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "value")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "mode")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "condition")
+        elif obj.shirakumo_trial_physics_props.type == 'CAMERA':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "camera_state")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "target")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "offset")
+        elif obj.shirakumo_trial_physics_props.type == 'INTERACTABLE':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "form")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "interaction")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "interaction_kind")
 
 class SHIRAKUMO_TRIAL_viewport_render:
     
