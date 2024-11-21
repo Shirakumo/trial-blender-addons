@@ -35,7 +35,8 @@ def hide_all(filter):
 def is_bakable_object(obj):
     return (obj.type == 'MESH' and
             (not obj.rigid_body or
-             not obj.khr_physics_extra_props))
+             not obj.khr_physics_extra_props or
+             obj.shirakumo_trial_physics_props.type in ['NONE', 'INTERACTABLE']))
 
 def object_surface_area(obj):
     bm = bmesh.new()
@@ -115,7 +116,7 @@ class SteppedOperator(bpy.types.Operator):
         self.timer_count = 0
 
     def modal(self, context, event):
-        if len(self.steps) <= self.index:
+        if len(self.steps) <= self.index or len(self.steps) == 0:
             context.window_manager.event_timer_remove(self.timer)
             context.object.shirakumo_operator_progress = -1.0
             context.area.tag_redraw()
