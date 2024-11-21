@@ -119,6 +119,12 @@ class glTF2ExportUserExtension:
                                        ("state", props.camera_state),
                                        ("target", props.target, ""),
                                        ("offset", pivot, [0,0,0]))))
+            elif props.type == "INTERACTABLE":
+                self.add_extension(gltf2_node,
+                                   ("interactable", args_dict(
+                                       ("interaction", props.interaction),
+                                       ("form", props.form),
+                                       ("kind", props.interaction_kind))))
             else:
                 self.add_extension(gltf2_node,
                                    ("virtual", props.virtual, False))

@@ -53,6 +53,14 @@ On object nodes set as physics objects the fields are:
     1. ``DISTANCE`` The distance between the camera and the target
     2. ``ANGLE`` The angle on the world XZ plane that the camera is at
     3. ``HEIGHT`` The angle of the camera on the Y quadrant above the XZ plane
+- ``interactable``
+  - ``interaction`` The interaction to present for the interactable object.
+  - ``form`` The Lisp expression to evaluate on interaction.
+  - ``kind`` The interaction type on this object. Can be one of:
+    - ``PICKUP`` An object that can be picked up. Should disappear after interaction.
+    - ``INSPECTABLE`` An object the player can look at more closely. Can be repeatedly inspected.
+    - ``USABLE`` An object that triggers some kind of interaction.
+    - ``BUTTON`` Same as ``USABLE`` but with a different context.
 
 On animations the fields are:
 
