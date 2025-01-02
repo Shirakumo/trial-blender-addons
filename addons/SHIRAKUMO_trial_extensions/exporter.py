@@ -1,7 +1,10 @@
 import bpy
 import os
+import logging
 from math import atan2
 from io_scene_gltf2.io.com import gltf2_io
+
+logger = logging.getLogger('glTFImporter')
 
 def args_dict(*args):
     props = {}
@@ -43,23 +46,38 @@ class glTF2ExportUserExtension:
         if bg and bg.inputs and bg.inputs[0].links:
             int = bg.inputs[1].default_value
             tex = bg.inputs[0].links[0].from_node
+            img = tex.image
             ori = None
             if 0 < len(tex.inputs[0].links):
                 ori = [x for x in tex.inputs[0].links[0].from_socket.default_value]
-            if tex.image and tex.image.filepath:
-                path = tex.image.filepath
-                if path.startswith("//"):
-                    path = bpy.path.abspath(path)
+            path = None
+            if img:
+                if 0 < len(img.packed_files):
+                    origpath = img.filepath
+                    path = os.path.join(os.path.dirname(export_settings['gltf_filepath']), os.path.basename(origpath))
+                    logger.info("Unpacking %s to %s", img.name, path)
+                    img.file_format = 'HDR'
+                    img.filepath = path
+                    img.unpack(method='WRITE_LOCAL')
+                    img.pack()
+                    img.filepath = origpath
+                elif img.filepath:
+                    path = img.filepath
+                    if path.startswith("//"):
+                        path = bpy.path.abspath(path)
+            if path:
                 if path.startswith("/"):
                     path = os.path.relpath(path, os.path.dirname(export_settings['gltf_filepath']))
+                logger.info("Referencing %s with path %s", img.name, path)
                 self.add_extension(gltf2_node,
                                    ("envmap", path),
                                    ("envmapColor", [int,int,int], [1.0,1.0,1.0]),
                                    ("envmapOrientation", ori))
-            
 
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
         if not self.properties.enabled:
+            return
+        if isinstance(blender_object, bpy.types.Collection):
             return
         if blender_object.type == "ARMATURE":
             props = blender_object.data.shirakumo_trial_extra_props
@@ -167,7 +185,7 @@ class glTF2ExportUserExtension:
                         pair = marker
                         break
                 if pair == None:
-                    print("Unmatched open marker pair: "+marker.name)
+                    logger.warning("Unmatched open marker pair: "+marker.name)
                 else:
                     effects.append({
                         "start": float(marker.frame) / self.framerate,
