@@ -49,9 +49,9 @@ class glTF2ExportUserExtension:
             if tex.image and tex.image.filepath:
                 path = tex.image.filepath
                 if path.startswith("//"):
-                    path = tex.image.filepath[2:]
+                    path = bpy.path.abspath(path)
                 if path.startswith("/"):
-                    path = os.path.relpath(path, export_settings['gltf_filepath'])
+                    path = os.path.relpath(path, os.path.dirname(export_settings['gltf_filepath']))
                 self.add_extension(gltf2_node,
                                    ("envmap", path),
                                    ("envmapColor", [int,int,int], [1.0,1.0,1.0]),
