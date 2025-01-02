@@ -79,7 +79,8 @@ On animations the fields are:
 
 On scenes the fields are:
 
-- ``envmap`` The path to the hdr environment map file
-- ``envmapOrientation`` A 3-component vector designating the orientation of the environment map
-- ``envmapColor`` A 3-component color multiplier of the environment map
+- ``envmap`` Description of an environment map:
+   - ``file`` The path to the hdr environment map file
+   - ``color`` A 3-component color multiplier of the environment map
+   - ``orientation`` A 3-component vector designating the orientation of the environment map
 

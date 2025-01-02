@@ -70,9 +70,10 @@ class glTF2ExportUserExtension:
                     path = os.path.relpath(path, os.path.dirname(export_settings['gltf_filepath']))
                 logger.info("Referencing %s with path %s", img.name, path)
                 self.add_extension(gltf2_node,
-                                   ("envmap", path),
-                                   ("envmapColor", [int,int,int], [1.0,1.0,1.0]),
-                                   ("envmapOrientation", ori))
+                                   ("envmap", args_dict(
+                                       ("file", path),
+                                       ("color", [int,int,int], [1.0,1.0,1.0]),
+                                       ("orientation", ori))))
 
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
         if not self.properties.enabled:
