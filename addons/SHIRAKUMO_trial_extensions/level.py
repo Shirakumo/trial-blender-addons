@@ -174,6 +174,7 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
         args = {"check_existing": False,
                 "use_visible": True,
                 "export_lights": True,
+                "export_cameras": True,
                 "export_def_bones": True}
         if path == '' or event.ctrl:
             self.steps.append(lambda : bpy.ops.export_scene.gltf('INVOKE_DEFAULT', **args))
