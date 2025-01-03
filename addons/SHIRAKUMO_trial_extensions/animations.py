@@ -44,7 +44,8 @@ class SHIRAKUMO_TRIAL_action_properties(bpy.types.PropertyGroup):
         items=[
             ("DEFAULT", "Default", "", 1),
             ("BLOCKING", "Blocking", "", 2),
-            ("PHYSICAL", "Physical", "", 3)
+            ("PHYSICAL", "Physical", "", 3),
+            ("ADDITIVE", "Additive", "", 4)
         ],
         default="DEFAULT", options=set(),
         update=animation_type_changed,
@@ -88,12 +89,13 @@ class SHIRAKUMO_TRIAL_PT_action_panel(bpy.types.Panel):
         layout.use_property_split = True
         flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
         obj = context.object.animation_data.action
-        flow.column().prop(obj.shirakumo_trial_extra_props, "loop_animation")
-        col = flow.column()
-        col.enabled = not obj.shirakumo_trial_extra_props.loop_animation
-        col.prop(obj.shirakumo_trial_extra_props, "next_animation")
-        flow.column().prop(obj.shirakumo_trial_extra_props, "blend_duration")
         flow.column().prop(obj.shirakumo_trial_extra_props, "type")
+        if obj.shirakumo_trial_extra_props.type != "ADDITIVE":
+            flow.column().prop(obj.shirakumo_trial_extra_props, "loop_animation")
+            col = flow.column()
+            col.enabled = not obj.shirakumo_trial_extra_props.loop_animation
+            col.prop(obj.shirakumo_trial_extra_props, "next_animation")
+            flow.column().prop(obj.shirakumo_trial_extra_props, "blend_duration")
         if obj.shirakumo_trial_extra_props.type == "PHYSICAL":
             flow.column().prop(obj.shirakumo_trial_extra_props, "velocity_scale")
 

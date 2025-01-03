@@ -200,14 +200,17 @@ class glTF2ExportUserExtension:
                     "effect": marker.name})
         
         props = blender_action.shirakumo_trial_extra_props
-        self.add_extension(gltf2_animation,
-                           ("type", props.type, "DEFAULT"),
-                           ("velocityScale", props.velocity_scale, 1.0),
-                           ("loop", props.loop_animation, True),
-                           ("next", props.next_animation, ""),
-                           ("blendDuration", props.blend_duration, 0.2),
-                           ("extraTracks", extra_tracks),
-                           ("effects", effects, []))
+        if props.type == "ADDITIVE":
+            self.add_extension(gltf2_animation, ("type", "ADDITIVE"))
+        else:
+            self.add_extension(gltf2_animation,
+                               ("type", props.type, "DEFAULT"),
+                               ("velocityScale", props.velocity_scale, 1.0),
+                               ("loop", props.loop_animation, True),
+                               ("next", props.next_animation, ""),
+                               ("blendDuration", props.blend_duration, 0.2),
+                               ("extraTracks", extra_tracks),
+                               ("effects", effects, []))
 
 class SHIRAKUMO_TRIAL_exporter_properties(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(

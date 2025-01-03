@@ -68,6 +68,7 @@ On animations the fields are:
   - ``DEFAULT`` Default animation that is just played back with no engine assistance.
   - ``BLOCKING`` A blocking animation that has a ``cancelable`` property.
   - ``PHYSICAL`` A physical root-motion animation.
+  - ``ADDITIVE`` An animation meant to be layered on top of another. Its duration has no meaning. The end of the animation represents 100% strength, the start 0%.
 - ``velocityScale`` How much to scale the physical root motion by
 - ``loop`` Whether the animation should loop or not
 - ``next`` The name of the animation to queue after this one
