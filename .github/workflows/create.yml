@@ -12,9 +12,9 @@ jobs:
       - name: Checkout gltf physics
         uses: actions/checkout@v4
         with:
-          repository: shirakumo/glTF_Physics_Blender_Exporter
+          repository: eoineoineoin/glTF_Physics_Blender_Exporter
           path: gltf_physics
-          branch: blender4.2
+          branch: main
       - name: Checkout gltf io
         uses: actions/checkout@v4
         with:
