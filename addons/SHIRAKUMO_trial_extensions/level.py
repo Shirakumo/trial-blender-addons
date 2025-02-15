@@ -69,14 +69,20 @@ def ensure_ao_material(obj, size=None, resize=True):
         obj.data.materials.append(mat)
 
     mat = obj.data.materials[0]
-    bsdf = mat.node_tree.nodes.get('Principled BSDF')
-    if not bsdf.inputs['Base Color'].links:
+    glTF = mat.node_tree.nodes.get('Group')
+    if not glTF:
+        original_type = bpy.context.area.type
+        bpy.context.area.type = 'NODE_EDITOR'
+        bpy.ops.node.gltf_settings_node_operator('INVOKE_DEFAULT')
+        bpy.context.area.type = original_type
+        glTF = mat.node_tree.nodes.get('Group')
+    if not glTF.inputs['Occlusion'].links:
         size = ao_size(obj, size)
         tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
         tex.image = bpy.data.images.new("AO", size, size)
-        mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
+        mat.node_tree.links.new(glTF.inputs['Occlusion'], tex.outputs['Color'])
 
-    img = bsdf.inputs['Base Color'].links[0].from_node.image
+    img = glTF.inputs['Occlusion'].links[0].from_node.image
     if resize:
         size = ao_size(obj, size)
         if img.size[0] != size:
@@ -257,7 +263,7 @@ def register():
     for cls in registered_classes:
         bpy.utils.register_class(cls)
     def clear_progress(_arg=None):
-        for obj in bpy.context.objects:
+        for obj in bpy.context.scene.objects:
             if hasattr(obj, 'shirakumo_operator_progress'):
                 obj.shirakumo_operator_progress = -1.0
     bpy.types.Object.shirakumo_operator_progress = bpy.props.FloatProperty(name="Progress", default=-1.0)
