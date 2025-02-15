@@ -256,9 +256,14 @@ registered_classes = [
 def register():
     for cls in registered_classes:
         bpy.utils.register_class(cls)
+    def clear_progress(_arg=None):
+        for obj in bpy.context.objects:
+            if hasattr(obj, 'shirakumo_operator_progress'):
+                obj.shirakumo_operator_progress = -1.0
     bpy.types.Object.shirakumo_operator_progress = bpy.props.FloatProperty(name="Progress", default=-1.0)
     bpy.types.Scene.shirakumo_trial_file_properties = bpy.props.PointerProperty(
         type=SHIRAKUMO_TRIAL_file_properties)
+    bpy.app.handlers.load_post.append(clear_progress)
 
 def unregister():
     del bpy.types.Object.shirakumo_operator_progress

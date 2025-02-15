@@ -458,6 +458,8 @@ class SHIRAKUMO_TRIAL_viewport_render:
             # you load a new scene, and this is the easiest way to fix it back up. Sigh.
             self.font = blf.load(self.fontpath)
             position = view3d_utils.location_3d_to_region_2d(bpy.context.region, bpy.context.space_data.region_3d, obj.location)
+            if position == None:
+                return
             (w,h) = blf.dimensions(self.font, icon)
             blf.size(self.font, self.icon_size)
             blf.position(self.font, position[0]-w/2, position[1]-h/2, 0)
