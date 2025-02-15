@@ -3,6 +3,12 @@ import bmesh
 from pathlib import Path
 from math import sqrt
 
+def message_box(message="", title="Trial", icon='INFO'):
+    def draw(self, context):
+        self.layout.label(text=message)
+
+    bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
+
 def push_selection(new):
     previous_selected = []
     for obj in bpy.context.selected_objects:
@@ -45,26 +51,34 @@ def object_surface_area(obj):
     bm.free()
     return size
 
-def ensure_ao_material(obj, size=None, resize=False):
+def ao_size(obj, size=None):
+    if not size:
+        ao_map_resolution = bpy.context.scene.shirakumo_trial_file_properties.ao_map_resolution
+        size = int(ao_map_resolution*sqrt(object_surface_area(obj)))
+    print("AO Size for "+obj.name+": "+str(size))
+    if 10000 < size:
+        message_box("Clamping AO map size down from "+str(size)+" to 10'000!", "Warning", 'ERROR')
+        print("!! Clamping size to 10'000")
+        size = 10000
+    return size
+
+def ensure_ao_material(obj, size=None, resize=True):
     if not obj.data.materials:
         mat = bpy.data.materials.new(name="AO_Material")
         mat.use_nodes = True
         obj.data.materials.append(mat)
 
-    ao_map_resolution = bpy.context.scene.shirakumo_trial_file_properties.ao_map_resolution
     mat = obj.data.materials[0]
     bsdf = mat.node_tree.nodes.get('Principled BSDF')
     if not bsdf.inputs['Base Color'].links:
-        if not size:
-            size = int(ao_map_resolution*sqrt(object_surface_area(obj)))
+        size = ao_size(obj, size)
         tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
         tex.image = bpy.data.images.new("AO", size, size)
         mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
 
     img = bsdf.inputs['Base Color'].links[0].from_node.image
     if resize:
-        if not size:
-            size = int(ao_map_resolution*sqrt(object_surface_area(obj)))
+        size = ao_size(obj, size)
         if img.size[0] != size:
             img.scale(size, size)
     return size
