@@ -74,7 +74,7 @@ def ensure_ao_material(obj, size=None, resize=True):
         bpy.context.preferences.addons['io_scene_gltf2'].preferences.settings_node_ui = True
         original_type = bpy.context.area.type
         bpy.context.area.type = 'NODE_EDITOR'
-        bpy.context.area.spaces.active.node_tree = nodes
+        bpy.context.area.spaces.active.node_tree = mat.node_tree
         bpy.ops.node.gltf_settings_node_operator('INVOKE_DEFAULT')
         bpy.context.area.type = original_type
         glTF = mat.node_tree.nodes.get('Group')
@@ -84,11 +84,16 @@ def ensure_ao_material(obj, size=None, resize=True):
         tex.image = bpy.data.images.new("AO", size, size)
         mat.node_tree.links.new(glTF.inputs['Occlusion'], tex.outputs['Color'])
 
-    img = glTF.inputs['Occlusion'].links[0].from_node.image
+    tex = glTF.inputs['Occlusion'].links[0].from_node
+
+    bsdf = mat.node_tree.nodes.get('Principled BSDF')
+    if not bsdf.inputs['Base Color'].links:
+        mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
+
     if resize:
         size = ao_size(obj, size)
-        if img.size[0] != size:
-            img.scale(size, size)
+        if tex.image.size[0] != size:
+            tex.image.scale(size, size)
     return size
 
 def ensure_physics_object(obj):
@@ -141,7 +146,8 @@ class SteppedOperator(bpy.types.Operator):
         if len(self.steps) <= self.index or len(self.steps) == 0:
             context.window_manager.event_timer_remove(self.timer)
             context.object.shirakumo_operator_progress = -1.0
-            context.area.tag_redraw()
+            if context.area != None:
+                context.area.tag_redraw()
             return {'FINISHED'}
 
         if event.type == 'TIMER':
@@ -157,11 +163,13 @@ class SteppedOperator(bpy.types.Operator):
                         print(traceback.format_exc())
                         context.window_manager.event_timer_remove(self.timer)
                         context.object.shirakumo_operator_progress = -1.0
-                        context.area.tag_redraw()
+                        if context.area != None:
+                            context.area.tag_redraw()
                         return {'CANCELLED'}
         
         context.object.shirakumo_operator_progress = float(max(0,self.index))/len(self.steps)
-        context.area.tag_redraw()
+        if context.area != None:
+            context.area.tag_redraw()
         return {'RUNNING_MODAL'}
 
     def invoke(self, context, event):
