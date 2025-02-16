@@ -55,12 +55,15 @@ class glTF2ExportUserExtension:
                 if 0 < len(img.packed_files):
                     origpath = img.filepath
                     path = os.path.join(os.path.dirname(export_settings['gltf_filepath']), os.path.basename(origpath))
-                    logger.info("Unpacking %s to %s", img.name, path)
-                    img.file_format = 'HDR'
-                    img.filepath = path
-                    img.unpack(method='WRITE_LOCAL')
-                    img.pack()
-                    img.filepath = origpath
+                    if os.path.isfile(path):
+                        logger.info("Skipping unpacking %s to %s", img.name, path)
+                    else:
+                        logger.info("Unpacking %s to %s", img.name, path)
+                        img.file_format = 'HDR'
+                        img.filepath = path
+                        img.unpack(method='WRITE_LOCAL')
+                        img.pack()
+                        img.filepath = origpath
                 elif img.filepath:
                     path = img.filepath
                     if path.startswith("//"):
