@@ -103,6 +103,7 @@ def ensure_physics_object(obj):
 
 def rebake_object(obj, resize=True):
     print("Rebake "+obj.name)
+    
     if not obj.rigid_body or obj.khr_physics_extra_props.infinite_mass:
         hide_all(lambda obj : obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
     else:
@@ -211,6 +212,20 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
         else:
             self.steps.append(lambda : bpy.ops.export_scene.gltf(filepath=path, **args))
 
+class SHIRAKUMO_TRIAL_OT_make_level(bpy.types.Operator):
+    bl_idname = "shirakumo_trial.make_level"
+    bl_label = "Mark as Level Geo"
+    
+    def invoke(self, context, event):
+        objects = context.selected_objects
+        if len(objects) == 0:
+            objects = bpy.data.objects
+        for obj in objects:
+            ensure_physics_object(obj)
+            obj.rigid_body.collision_shape = 'MESH'
+            obj.khr_physics_extra_props.infinite_mass = True
+        return {'FINISHED'}
+
 class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
     bl_idname = "shirakumo_trial.export_as_object"
     bl_label = "Export as Object"
@@ -244,6 +259,7 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake Selected")
             else:
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake All")
+            layout.column().operator("shirakumo_trial.make_level", text="Make Level Geo")
             layout.column().operator("shirakumo_trial.reexport", text="ReExport")
             layout.column().operator("shirakumo_trial.export_as_object", text="Export as Object")
 
@@ -264,6 +280,7 @@ class SHIRAKUMO_TRIAL_file_properties(bpy.types.PropertyGroup):
 registered_classes = [
     SHIRAKUMO_TRIAL_OT_rebake,
     SHIRAKUMO_TRIAL_OT_reexport,
+    SHIRAKUMO_TRIAL_OT_make_level,
     SHIRAKUMO_TRIAL_OT_export_as_object,
     SHIRAKUMO_TRIAL_PT_edit_panel,
     SHIRAKUMO_TRIAL_file_properties,
