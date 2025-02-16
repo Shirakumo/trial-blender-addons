@@ -70,9 +70,11 @@ def ensure_ao_material(obj, size=None, resize=True):
 
     mat = obj.data.materials[0]
     glTF = mat.node_tree.nodes.get('Group')
-    if not glTF:
+    if glTF == None:
+        bpy.context.preferences.addons['io_scene_gltf2'].preferences.settings_node_ui = True
         original_type = bpy.context.area.type
         bpy.context.area.type = 'NODE_EDITOR'
+        bpy.context.area.spaces.active.node_tree = nodes
         bpy.ops.node.gltf_settings_node_operator('INVOKE_DEFAULT')
         bpy.context.area.type = original_type
         glTF = mat.node_tree.nodes.get('Group')
