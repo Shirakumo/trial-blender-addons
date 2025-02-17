@@ -18,6 +18,19 @@ def push_selection(new):
         obj.select_set(True)
     return previous_selected
 
+class ObjectMode(object):
+    def __init__(self, new=None):
+        self.previous = None
+        self.new = new
+
+    def __enter__(self):
+        self.previous = bpy.context.object.mode
+        bpy.ops.object.mode_set(mode=self.new)
+        return self
+
+    def __exit__(self ,*args):
+        bpy.ops.object.mode_set(mode=self.previous)
+
 class Selection(object):
     def __init__(self, new=[]):
         self.previous = []
@@ -220,6 +233,19 @@ class SHIRAKUMO_TRIAL_OT_make_level(bpy.types.Operator):
         objects = context.selected_objects
         if len(objects) == 0:
             objects = bpy.data.objects
+        objects = [ x for x in objects if x.type == 'MESH' ]
+        push_selection(objects)
+        bpy.ops.object.make_single_user(object=True, obdata=True)
+        bpy.ops.object.transform_apply(scale=True)
+        bpy.ops.object.join()
+        objects = [bpy.context.active_object]
+        with ObjectMode('EDIT'):
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.mesh.remove_doubles(threshold=0.0001)
+            bpy.ops.mesh.select_all(action='DESELECT')
+            bpy.ops.mesh.select_mode(type = 'FACE')
+            bpy.ops.mesh.select_interior_faces()
+            bpy.ops.mesh.delete(type='FACE')
         for obj in objects:
             ensure_physics_object(obj)
             obj.rigid_body.collision_shape = 'MESH'
