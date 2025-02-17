@@ -276,8 +276,10 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-        
-        if 0 <= context.object.shirakumo_operator_progress:
+
+        if not hasattr(context.object, 'shirakumo_operator_progress'):
+            pass
+        elif 0 <= context.object.shirakumo_operator_progress:
             layout.column().progress(text="Working..." , factor=context.object.shirakumo_operator_progress)
         else:
             layout.column().prop(context.scene.shirakumo_trial_file_properties, "ao_map_resolution")
