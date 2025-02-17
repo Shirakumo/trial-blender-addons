@@ -9,6 +9,13 @@ def link_to_object_collection(obj, new):
         if collection.name != 'RigidBodyWorld':
             collection.objects.link(new)
 
+def center_in_view(obj):
+    region = bpy.context.region
+    middle = [region.width / 2.0, region.height / 2.0]
+    center = view3d_utils.region_2d_to_origin_3d(region, bpy.context.space_data.region_3d, middle)
+    forward = view3d_utils.region_2d_to_vector_3d(region, bpy.context.space_data.region_3d, middle)
+    obj.location = center + forward*10.0
+
 class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     
@@ -45,6 +52,7 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
         bpy.ops.mesh.primitive_cube_add(calc_uvs=False)
         bpy.ops.rigidbody.objects_add()
         obj = bpy.context.selected_objects[0]
+        center_in_view(obj)
         obj.name = self.bl_label
         obj.color = (1, 0, 1, 1)
         obj.hide_render = True
@@ -139,8 +147,8 @@ class SHIRAKUMO_TRIAL_OT_add_checkpoint(GenericTrigger):
         child = bpy.data.objects.new('Spawnpoint', None)
         link_to_object_collection(obj, child)
         child.empty_display_type = 'ARROWS'
-        child.location = obj.location
         child.parent = obj
+        child.location = (0,0,0)
         
     def customize_layout(self, layout):
         pass
@@ -211,17 +219,17 @@ class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
         pivot = bpy.data.objects.new('CameraPivot', None)
         link_to_object_collection(obj, pivot)
         pivot.empty_display_type = 'CIRCLE'
-        pivot.location = obj.location
-        pivot.rotation_euler = (radians(90), 0, 0)
         pivot.parent = obj
+        pivot.location = (0,0,0)
+        pivot.rotation_euler = (radians(90), 0, 0)
         pointer = bpy.data.objects.new('CameraPivotPointer', None)
         link_to_object_collection(obj, pointer)
+        pointer.parent = pivot
         pointer.empty_display_type = 'SINGLE_ARROW'
-        pointer.location = pivot.location
+        pointer.location = (0,0,0)
         pointer.location[0] += 1
         pointer.rotation_euler = (0, radians(-90), 0)
         pointer.scale = [0.5,0.5,0.5]
-        pointer.parent = pivot
         # Apply defaults
         default = bpy.context.scene.shirakumo_trial_file_properties.default_camera_offset
         pivot.location[2] += default[0]*cos(default[2])
