@@ -240,12 +240,13 @@ class SHIRAKUMO_TRIAL_OT_make_level(bpy.types.Operator):
         bpy.ops.object.join()
         objects = [bpy.context.active_object]
         with ObjectMode('EDIT'):
+            bpy.ops.mesh.select_mode(type = 'VERT')
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.remove_doubles(threshold=0.0001)
             bpy.ops.mesh.select_all(action='DESELECT')
-            bpy.ops.mesh.select_mode(type = 'FACE')
-            bpy.ops.mesh.select_interior_faces()
-            bpy.ops.mesh.delete(type='FACE')
+            # bpy.ops.mesh.select_mode(type = 'FACE')
+            # bpy.ops.mesh.select_interior_faces()
+            # bpy.ops.mesh.delete(type='FACE')
         for obj in objects:
             ensure_physics_object(obj)
             obj.rigid_body.collision_shape = 'MESH'
