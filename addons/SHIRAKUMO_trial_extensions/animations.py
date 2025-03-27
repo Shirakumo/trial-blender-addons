@@ -3,15 +3,16 @@ import bpy
 def ensure_track_for_property(obj, base, prop, interpolation="CONSTANT", intended=True):
     data_path = base+"."+prop
     action = obj.animation_data.action
-    for fcurve in action.fcurves:
+    fcurves = action.layers[0].strips[0].channelbag(action.slots[0]).fcurves
+    for fcurve in fcurves:
         if fcurve.data_path == data_path:
             if intended == True or prop in intended:
                 return fcurve
             else:
-                obj.animation_data.action.fcurves.remove(fcurve)
+                fcurves.remove(fcurve)
                 return None
     if intended == True or prop in intended:
-        fcurve = action.fcurves.new(data_path)
+        fcurve = fcurves.new(data_path)
         range = action.frame_range
         fcurve.keyframe_points.insert(frame=range[0], value=0.0).interpolation = interpolation
         fcurve.keyframe_points.insert(frame=range[1], value=0.0).interpolation = interpolation

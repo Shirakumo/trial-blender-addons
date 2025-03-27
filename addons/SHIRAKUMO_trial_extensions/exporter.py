@@ -175,7 +175,7 @@ class glTF2ExportUserExtension:
         ##         so....
         extra_tracks = {}
         base = "data.shirakumo_trial_extra_props."
-        for fcurve in blender_action.fcurves:
+        for fcurve in blender_action.layers[0].strips[0].channelbag(blender_action.slots[0]).fcurves:
             if fcurve.data_path.startswith(base):
                 name = fcurve.data_path[len(base):]
                 extra_tracks[name] = self.encode_fcurve(fcurve, blender_action.frame_range)
