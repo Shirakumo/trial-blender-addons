@@ -215,9 +215,16 @@ class glTF2ExportUserExtension:
                                ("extraTracks", extra_tracks),
                                ("effects", effects, []))
 
+def draw_export(context, layout):
+    header, body = layout.panel("Shirakumo Trial Extensions", default_closed=False)
+    header.use_property_split = False
+    props = bpy.context.scene.shirakumo_trial_exporter_props
+    header.prop(props, 'enabled')
+
+
 class SHIRAKUMO_TRIAL_exporter_properties(bpy.types.PropertyGroup):
     enabled: bpy.props.BoolProperty(
-        name="SHIRAKUMO_TRIAL_extensions",
+        name="Shirakumo Trial Extensions",
         description="Include Trial-specific extensions",
         default=True)
 
@@ -225,7 +232,11 @@ def register():
     bpy.utils.register_class(SHIRAKUMO_TRIAL_exporter_properties)
     bpy.types.Scene.shirakumo_trial_exporter_props = bpy.props.PointerProperty(
         type=SHIRAKUMO_TRIAL_exporter_properties)
+    from io_scene_gltf2 import exporter_extension_layout_draw
+    exporter_extension_layout_draw['Shirakumo Trial Extensions'] = draw_export
 
 def unregister():
     bpy.utils.unregister_class(SHIRAKUMO_TRIAL_exporter_properties)
     del bpy.types.Scene.shirakumo_trial_exporter_props
+    from io_scene_gltf2 import exporter_extension_layout_draw
+    del exporter_extension_layout_draw['Shirakumo Trial Extensions']
