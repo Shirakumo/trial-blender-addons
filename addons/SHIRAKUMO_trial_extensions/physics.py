@@ -442,7 +442,8 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
 
 class SHIRAKUMO_TRIAL_viewport_render:
     
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.icon_size = 50.0
         self.font = None
         self.fontpath = os.path.dirname(__file__)+'/fontawesome.ttf'
