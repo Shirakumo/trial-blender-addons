@@ -3,7 +3,11 @@ import bpy
 def ensure_track_for_property(obj, base, prop, interpolation="CONSTANT", intended=True):
     data_path = base+"."+prop
     action = obj.animation_data.action
-    fcurves = action.layers[0].strips[0].channelbag(action.slots[0]).fcurves
+    fcurves = []
+    if hasattr(action, 'layers'):
+        fcurves = action.layers[0].strips[0].channelbag(action.slots[0]).fcurves
+    else:
+        fcurves = action.fcurves
     for fcurve in fcurves:
         if fcurve.data_path == data_path:
             if intended == True or prop in intended:
