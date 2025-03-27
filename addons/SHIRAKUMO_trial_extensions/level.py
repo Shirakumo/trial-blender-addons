@@ -98,10 +98,12 @@ def ensure_ao_material(obj, size=None, resize=True):
         mat.node_tree.links.new(glTF.inputs['Occlusion'], tex.outputs['Color'])
 
     tex = glTF.inputs['Occlusion'].links[0].from_node
+    tex.select = True
+    mat.node_tree.nodes.active = tex
 
     bsdf = mat.node_tree.nodes.get('Principled BSDF')
-    if not bsdf.inputs['Base Color'].links:
-        mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
+    #if not bsdf.inputs['Base Color'].links:
+    #    mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
 
     if resize:
         size = ao_size(obj, size)
