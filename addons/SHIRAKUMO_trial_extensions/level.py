@@ -150,7 +150,8 @@ def export_single_object(obj=None, path=None):
     bpy.ops.scene.delete()
 
 class SteppedOperator(bpy.types.Operator):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.steps = []
         self.index = -1
         self.timer = None
