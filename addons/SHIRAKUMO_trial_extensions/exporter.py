@@ -107,6 +107,7 @@ class glTF2ExportUserExtension:
                                        ("spawn", props.spawn),
                                        ("spawnCount", props.spawn_count, 1),
                                        ("autoDeactivate", props.auto_deactivate, True),
+                                       ("snapToSurface", props.snap_to_surface, True),
                                        ("respawnCooldown", props.respawn_cooldown, 0.0))))
             elif props.type == "KILLVOLUME":
                 self.add_extension(gltf2_node,

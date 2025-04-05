@@ -330,6 +330,10 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         name="Auto-Deactivate",
         default=True, options=set(),
         description="Whether the trigger should deactivate itself when all its spawned items have been removed")
+    snap_to_surface: bpy.props.BoolProperty(
+        name="Snap to Surface",
+        default=True, options=set(),
+        description="Whether to snap spawned entities down to the nearest surface on spawn")
     kill_type: bpy.props.StringProperty(
         name="Type",
         default="T", options=set(),
@@ -419,6 +423,7 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
             flow.column().prop(obj.shirakumo_trial_physics_props, "form")
         elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
             flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "snap_to_surface")
             flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
             flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
             flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
