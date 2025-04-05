@@ -30,6 +30,7 @@ On object nodes set as physics objects the fields are:
     - A Lisp expression designating a list of the object class and the initialisation arguments
   - ``spawnCount`` The number of objects to spawn
   - ``autoDeactivate`` Whether the trigger should deactivate after all spawned objects were removed
+  - ``snapToSurface`` Whether spawned objects should be snapped down to the level surface on spawn
   - ``respawnCooldown`` How much time to wait to respawn a removed object
 - ``killvolume``
   - ``kill`` A Lisp type expression to match which objects to remove when entering the trigger volume
