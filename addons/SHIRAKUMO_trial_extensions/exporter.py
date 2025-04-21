@@ -190,9 +190,9 @@ class glTF2ExportUserExtension:
             if marker.name.startswith("["):
                 name = marker.name[1:].strip()
                 pair = None
-                for marker in blender_action.pose_markers:
-                    if marker.name.endswith("]") and marker.name[:-1].strip() == name:
-                        pair = marker
+                for marker2 in blender_action.pose_markers:
+                    if marker2.name.endswith("]") and marker2.name[:-1].strip() == name:
+                        pair = marker2
                         break
                 if pair == None:
                     logger.warning("Unmatched open marker pair: "+marker.name)
