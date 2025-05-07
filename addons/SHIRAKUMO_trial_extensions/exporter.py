@@ -150,7 +150,8 @@ class glTF2ExportUserExtension:
                                        ("kind", props.interaction_kind))))
             else:
                 self.add_extension(gltf2_node,
-                                   ("virtual", props.virtual, False))
+                                   ("virtual", props.virtual, False),
+                                   ("instanceOf", props.instance_of, ""))
 
     def encode_fcurve(self, fcurve, range):
         data = {"interpolation": "CONSTANT",
