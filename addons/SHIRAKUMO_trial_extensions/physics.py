@@ -342,6 +342,10 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         name="Virtual",
         default=False, options=set(),
         description="If true the object won't be visible, but will be participating in physics interactions")
+    instance_of: bpy.props.StringProperty(
+        name="Instance Of",
+        default="", options=set(),
+        description="The class name to instantiate this with, if any")
     state: bpy.props.StringProperty(
         name="State",
         default="progression", options=set(),
@@ -417,6 +421,7 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
         flow.column().prop(obj.shirakumo_trial_physics_props, "type")
         if obj.shirakumo_trial_physics_props.type in ['NONE', 'INTERACTABLE']:
             flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "instance_of")
         else:
             flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
         if obj.shirakumo_trial_physics_props.type == 'TRIGGER':

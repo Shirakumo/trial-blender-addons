@@ -22,6 +22,7 @@ On rig nodes the fields are:
 On object nodes set as physics objects the fields are:
 
 - ``virtual`` If true the object should not be rendered but still participate in collisions
+- ``instanceOf`` The name of the class to make this an instance of, if any
 - ``trigger``
   - ``form`` The Lisp expression to evaluate
 - ``spawner``
