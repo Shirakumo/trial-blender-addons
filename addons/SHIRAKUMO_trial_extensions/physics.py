@@ -399,31 +399,82 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         default="INSPECTABLE", options=set(),
         description="The kind of interaction to trigger")
 
-class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
-    bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
+class SHIRAKUMO_TRIAL_PT_physics_panel_base(bpy.types.Panel):
     bl_label = "Trial Extensions"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "physics"
+
+    @classmethod
+    def rigid_body_selected(cls, context):
+        if context.object and context.object.rigid_body:
+            return True
+        return None
+
+class SHIRAKUMO_TRIAL_PT_physics_panel(SHIRAKUMO_TRIAL_PT_physics_panel_base):
+    bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
+
+    @classmethod
+    def poll(cls, context):
+        return SHIRAKUMO_TRIAL_PT_physics_panel_base.rigid_body_selected(context)
+
+    def draw(self, context):
+        obj = context.object
+        layout = self.layout
+        layout.use_property_split = True
+        flow = layout.grid_flow(
+            row_major=True, columns=0, even_columns=True, even_rows=False, align=True
+        )
+        flow.column().prop(obj.shirakumo_trial_physics_props, "type")
+
+class SHIRAKUMO_TRIAL_PT_object(SHIRAKUMO_TRIAL_PT_physics_panel_base):
+    bl_label = "Object Properties"
+    bl_parent_id = "SHIRAKUMO_TRIAL_PT_physics_panel"
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
     bl_context = "physics"
     
     @classmethod
     def poll(cls, context):
-        if context.object and context.object.rigid_body:
-            return True
-        return None
+        return (SHIRAKUMO_TRIAL_PT_physics_panel_base.rigid_body_selected(context)
+                and context.object.shirakumo_trial_physics_props.type in ['NONE', 'INTERACTABLE'])
 
     def draw(self, context):
         obj = context.object
         layout = self.layout
         layout.use_property_split = True
-        flow = layout.grid_flow(row_major=True, columns=0, even_columns=True, even_rows=False, align=True)
+        flow = layout.grid_flow(
+            row_major=True, columns=0, even_columns=True, even_rows=False, align=True
+        )
 
-        flow.column().prop(obj.shirakumo_trial_physics_props, "type")
-        if obj.shirakumo_trial_physics_props.type in ['NONE', 'INTERACTABLE']:
-            flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "instance_of")
-        else:
-            flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
+        flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
+        flow.column().prop(obj.shirakumo_trial_physics_props, "instance_of")
+        if obj.shirakumo_trial_physics_props.type == 'INTERACTABLE':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "form")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "interaction")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "interaction_kind")
+
+class SHIRAKUMO_TRIAL_PT_trigger(SHIRAKUMO_TRIAL_PT_physics_panel_base):
+    bl_label = "Trigger Properties"
+    bl_parent_id = "SHIRAKUMO_TRIAL_PT_physics_panel"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "physics"
+    
+    @classmethod
+    def poll(cls, context):
+        return (SHIRAKUMO_TRIAL_PT_physics_panel_base.rigid_body_selected(context)
+                and not context.object.shirakumo_trial_physics_props.type in ['NONE', 'INTERACTABLE'])
+
+    def draw(self, context):
+        obj = context.object
+        layout = self.layout
+        layout.use_property_split = True
+        flow = layout.grid_flow(
+            row_major=True, columns=0, even_columns=True, even_rows=False, align=True
+        )
+
+        flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
         if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
             flow.column().prop(obj.shirakumo_trial_physics_props, "form")
         elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
@@ -445,10 +496,6 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(bpy.types.Panel):
             flow.column().prop(obj.shirakumo_trial_physics_props, "camera_state")
             flow.column().prop(obj.shirakumo_trial_physics_props, "target")
             flow.column().prop(obj.shirakumo_trial_physics_props, "offset")
-        elif obj.shirakumo_trial_physics_props.type == 'INTERACTABLE':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "form")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "interaction")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "interaction_kind")
 
 class SHIRAKUMO_TRIAL_viewport_render:
     
@@ -500,6 +547,8 @@ registered_classes = [
     SHIRAKUMO_TRIAL_MT_triggers_add,
     SHIRAKUMO_TRIAL_physics_properties,
     SHIRAKUMO_TRIAL_PT_physics_panel,
+    SHIRAKUMO_TRIAL_PT_object,
+    SHIRAKUMO_TRIAL_PT_trigger,
 ]
 
 def register():
