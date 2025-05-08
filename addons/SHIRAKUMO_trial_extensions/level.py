@@ -199,6 +199,8 @@ class SteppedOperator(bpy.types.Operator):
 class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
     bl_idname = "shirakumo_trial.rebake"
     bl_label = "ReBake"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = "Re-bake the ambient occlusion map and set it up if necessary."
 
     @classmethod
     def poll(cls, context):
@@ -215,6 +217,14 @@ class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
 class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     bl_idname = "shirakumo_trial.reexport"
     bl_label = "ReExport"
+
+    @classmethod
+    def description(cls, context, properties):
+        path = context.scene.shirakumo_trial_file_properties.export_path
+        if path == '':
+            return "Export the current file."
+        else:
+            return "Re-export the current file to "+path
     
     def prepare(self, context, event):
         path = context.scene.shirakumo_trial_file_properties.export_path
@@ -231,6 +241,8 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
 class SHIRAKUMO_TRIAL_OT_make_level(bpy.types.Operator):
     bl_idname = "shirakumo_trial.make_level"
     bl_label = "Mark as Level Geo"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = "Turn the object into level geometry by setting the corresponding physics properties and normalising its transform and geometry."
     
     def invoke(self, context, event):
         objects = context.selected_objects
@@ -259,6 +271,7 @@ class SHIRAKUMO_TRIAL_OT_make_level(bpy.types.Operator):
 class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
     bl_idname = "shirakumo_trial.export_as_object"
     bl_label = "Export as Object"
+    bl_description = "Export the selected object as a single glTF file."
 
     @classmethod
     def poll(cls, context):
@@ -288,9 +301,9 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
         else:
             layout.column().prop(context.scene.shirakumo_trial_file_properties, "ao_map_resolution")
             if 0 < len(context.selected_objects):
-                layout.column().operator("shirakumo_trial.rebake", text="ReBake Selected")
+                layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for Selected")
             else:
-                layout.column().operator("shirakumo_trial.rebake", text="ReBake All")
+                layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for All")
             layout.column().operator("shirakumo_trial.make_level", text="Make Level Geo")
             layout.column().operator("shirakumo_trial.reexport", text="ReExport")
             layout.column().operator("shirakumo_trial.export_as_object", text="Export as Object")
