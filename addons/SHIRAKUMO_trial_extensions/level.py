@@ -127,12 +127,18 @@ def rebake_object(obj, resize=True):
 
     with Selection([obj]) as sel:
         size = ensure_ao_material(obj, None, resize)
+        # Modify the material to make it opaque, otherwise the AO bake fucks up
+        alpha = obj.data.materials[0].node_tree.nodes.get('Principled BSDF').inputs['Alpha']
+        saved_alpha = alpha.default_value
+        alpha.default_value = 1.0
+
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
         bpy.ops.uv.smart_project(island_margin=1/size)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.context.scene.render.engine = 'CYCLES'
         bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', use_clear=True)
+        alpha.default_value = saved_alpha
 
 def export_single_object(obj=None, path=None):
     if obj == None:
