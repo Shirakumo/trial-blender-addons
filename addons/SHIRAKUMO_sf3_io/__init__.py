@@ -1,4 +1,5 @@
 import bpy
+from bpy_extras.io_utils import poll_file_object_drop
 from . import exporter
 from . import importer
 
@@ -20,11 +21,25 @@ modules = [
     importer
 ]
 
+class IO_FH_sf3(bpy.types.FileHandler):
+    bl_idname = "IO_FH_sf3"
+    bl_label = "SF3"
+    bl_import_operator = "import_scene.sf3"
+    bl_export_operator = "export_scene.sf3"
+    bl_file_extensions = ".sf3"
+
+    @classmethod
+    def poll_drop(cls, context):
+        return poll_file_object_drop(context)
+
+
 def register():
+    bpy.utils.register_class(IO_FH_sf3)
     for mod in modules:
         mod.register()
 
 def unregister():
+    bpy.utils.unregister_class(IO_FH_sf3)
     for mod in modules:
         mod.unregister()
 

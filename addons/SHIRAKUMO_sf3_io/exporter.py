@@ -3,7 +3,7 @@ from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 
 def export_model(file, config):
-    pass
+    return {'FINISHED'}
 
 class ExportSF3(Operator, ExportHelper):
     bl_idname = 'export_scene.sf3'

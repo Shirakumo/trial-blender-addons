@@ -65,6 +65,14 @@ class Sf3Model(KaitaiStruct):
             return getattr(self, '_m_has_position', None)
 
         @property
+        def vertex_stride(self):
+            if hasattr(self, '_m_vertex_stride'):
+                return self._m_vertex_stride
+
+            self._m_vertex_stride = (((((((self.raw >> 0) & 1) * 3) + (((self.raw >> 1) & 1) * 2)) + (((self.raw >> 2) & 1) * 3)) + (((self.raw >> 3) & 1) * 3)) + (((self.raw >> 4) & 1) * 3))
+            return getattr(self, '_m_vertex_stride', None)
+
+        @property
         def has_tangent(self):
             if hasattr(self, '_m_has_tangent'):
                 return self._m_has_tangent
@@ -132,7 +140,7 @@ class Sf3Model(KaitaiStruct):
             if hasattr(self, '_m_material_count'):
                 return self._m_material_count
 
-            self._m_material_count = (((((((((self.raw >> 0) & (1 + (self.raw >> 1))) & (1 + (self.raw >> 2))) & (1 + (self.raw >> 3))) & (1 + (self.raw >> 4))) & (1 + (self.raw >> 5))) & (1 + (self.raw >> 6))) & (1 + (self.raw >> 7))) & 1)
+            self._m_material_count = (((((((((self.raw >> 0) & 1) + ((self.raw >> 1) & 1)) + ((self.raw >> 2) & 1)) + ((self.raw >> 3) & 1)) + ((self.raw >> 4) & 1)) + ((self.raw >> 5) & 1)) + ((self.raw >> 6) & 1)) + ((self.raw >> 7) & 1))
             return getattr(self, '_m_material_count', None)
 
         @property
