@@ -1,5 +1,5 @@
 # Trial Blender Addons
-This is a repository that contains addons for Blender specifically for creating models and levels for use with the [Trial engine](https://shirakumo.org/projects/trial) and associated technologies like the Simple File Format Family (SF3).
+This is a repository that contains addons for Blender specifically for creating models and levels for use with the [Trial engine](https://shirakumo.org/projects/trial) and associated technologies like the [Simple File Format Family (SF3)](https://shirakumo.org/docs/sf3).
 
 ## Installation
 You can [download the latest release](https://github.com/Shirakumo/trial-blender-addons/releases/latest/) of our plugins and the dependent ``KHR_physics_rigid_bodies`` directly here from GitHub. The zip files can be imported into Blender just like any other addon.
