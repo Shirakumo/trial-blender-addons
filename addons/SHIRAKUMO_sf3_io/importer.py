@@ -19,11 +19,9 @@ def import_model(file, config):
     dat = mod.vertex_data
     stride = mod.format.vertex_stride
     vert_range = range(0, len(dat.vertices), stride)
-    verts = [dat.vertices[i:i+3] for i in vert_range]
+    verts = [[dat.vertices[i+0],dat.vertices[i+2],-dat.vertices[i+1]] for i in vert_range]
     faces = [dat.faces[i:i+3] for i in range(0, len(dat.faces), 3)]
     mesh.from_pydata(verts, [], faces)
-
-    # TODO: convert Y-up
 
     offset = 3
     if mod.format.has_uv:
@@ -46,7 +44,7 @@ def import_model(file, config):
         layer.data.foreach_set('color', colors)
         offset += 3
     if mod.format.has_normal:
-        normals = [dat.vertices[i+offset:i+offset+3] for i in vert_range]
+        normals = [[dat.vertices[i+offset+0],dat.vertices[i+offset+2],-dat.vertices[i+offset+1]] for i in vert_range]
         mesh.normals_split_custom_set_from_vertices(normals)
         offset += 3
     if mod.format.has_tangent:
