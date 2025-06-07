@@ -8,37 +8,30 @@ jobs:
       - name: Checkout the code
         uses: actions/checkout@v4
         with:
-          path: trial
+          path: trial_addons
       - name: Checkout gltf physics
         uses: actions/checkout@v4
         with:
           repository: shirakumo/glTF_Physics_Blender_Exporter
           path: gltf_physics
           branch: main
-      - name: Checkout gltf io
-        uses: actions/checkout@v4
-        with:
-          repository: KhronosGroup/glTF-Blender-IO
-          path: gltf_io
       - name: Build ZIP files
         run: |
-          cd $GITHUB_WORKSPACE/trial/addons/
+          cd $GITHUB_WORKSPACE/trial_addons/addons/
           cp ../LICENSE */
-          zip -r $GITHUB_WORKSPACE/SHIRAKUMO_trial_extensions.zip .
+          zip -r $GITHUB_WORKSPACE/SHIRAKUMO_trial_extensions.zip SHIRAKUMO_trial_extensions
+          zip -r $GITHUB_WORKSPACE/SHIRAKUMO_sf3_io.zip SHIRAKUMO_sf3_io
           cd $GITHUB_WORKSPACE/gltf_physics/addons/
           cp ../LICENSE.txt */
           zip -r $GITHUB_WORKSPACE/KHR_physics_rigid_bodies.zip .
-          cd $GITHUB_WORKSPACE/gltf_io/addons/
-          cp ../LICENSE.txt */
-          zip -r $GITHUB_WORKSPACE/KHR_gltf_io.zip .
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: trial-blender-addons
           path: |
             SHIRAKUMO_trial_extensions.zip
+            SHIRAKUMO_sf3_io.zip
             KHR_physics_rigid_bodies.zip
-            KHR_gltf_io.zip
       - name: Create release
         id: create_release
         uses: ncipollo/release-action@v1
@@ -48,5 +41,5 @@ jobs:
           name: Release ${{ github.ref_name }}
           artifacts: |
             SHIRAKUMO_trial_extensions.zip
+            SHIRAKUMO_sf3_io.zip
             KHR_physics_rigid_bodies.zip
-            KHR_gltf_io.zip
