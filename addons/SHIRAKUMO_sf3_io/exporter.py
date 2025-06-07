@@ -1,18 +1,23 @@
 import bpy
+import os
 from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 
+def save_node(file, node):
+    ## TODO: write out images
+    pass
+
 def export_model(file, obj, config):
+    print("Exporting to "+file)
+    dir = os.path.dirname(file)
     vertices = []
     faces = []
     textures = []
     vertex_type = 1
     material_type = 0
     mesh = obj.data.meshes[0]
-    mat = obj.data.materials[0]
-
-    ## TODO: Split vertices where needed (UVs, normals, etc)
     
+    ## TODO: Split vertices where needed (UVs, normals, etc)
     if 0 < len(mesh.uv_layers):
         vertex_type = vertex_type | 2
     if 0 < len(mesh.color_attributes):
@@ -21,9 +26,25 @@ def export_model(file, obj, config):
         vertex_type = vertex_type | 8
     if config['export_tangents']:
         vertex_type = vertex_type | 16
-
     ## TODO: flatten vertex arrays together
-    ## TODO: write out images
+
+    if 0 < len(obj.data.materials):
+        nodes = obj.data.materials[0].node_tree.nodes
+        bsdf = nodes.get("Principled BSDF")
+        outp = nodes.get("Material Output")
+        def try_add(input, bit):
+            if 0 < len(input.links):
+                tex = save_node(os.path.join(dir, name), input.links[0])
+                if tex:
+                    material_type = material_type | bit
+                    textures.append(tex)
+        
+        try_add(bsdf.inputs('Base Color'), 'albedo', 1)
+        try_add(bsdf.inputs('Normal'), 'normal', 2)
+        if 0 == material_type & 0b111100:
+            try_add(bsdf.inputs('Specular Tint'), 'specular', 64)
+        try_add(bsdf.inputs('Emission Color'), 'emissive', 128)
+        # TODO: decode metallic and separated mro
     
     # Kaitai serialization is really.... really.... annoyingly cumbersome
     model = Sf3Model()
