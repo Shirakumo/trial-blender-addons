@@ -4,11 +4,13 @@ from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 
 def save_image(file, src_image, config):
+    if config.image_type == 'None':
+        return file
     image = src_image.copy()
     image.update()
     image.scale(*src_image.size)
-    # Options: 'BMP', 'IRIS', 'PNG', 'JPEG', 'JPEG2000', 'TARGA', 'TARGA_RAW', 'CINEON', 'DPX', 'OPEN_EXR_MULTILAYER', 'OPEN_EXR', 'HDR', 'TIFF', 'WEBP'
-    image.file_format = config.image_type
+    if config.image_type != 'AUTO':
+        image.file_format = config.image_type
     image.filepath_raw = file
     if file_format in ["JPEG", "WEBP"]:
         image.save(quality=config['image_quality'])
@@ -87,23 +89,62 @@ class ExportSF3(Operator, ExportHelper):
     filename_ext = 'sf3'
     filter_glob: bpy.props.StringProperty(default='*.sf3', options={'HIDDEN'})
 
+    image_type: bpy.props.EnumProperty(
+        name='Images',
+        items=(('AUTO', 'Automatic', 'Save images in their original format, or PNG'),
+               ('PNG', 'PNG Format', 'Save images as lossless PNGs'),
+               ('BMP', 'BitMaP Format', 'Save images as lossless, uncompressed BMPs'),
+               ('TGA', 'Targa Format', 'Save images as lossless, uncompressed TGAs'),
+               ('JPEG', 'JPEG Format', 'Same images as lossy JPEGs'),
+               ('WEBP', 'WebP Format', 'Save images as lossy WebPs'),
+               ('NONE', 'None', 'Don\'t export images')),
+        description='Output format for images.',
+        default='AUTO',
+    )
+    image_quality: bpy.props.IntProperty(
+        name='Image Quality',
+        description='The quality of the image for compressed formats',
+        default=80, min=1, max=100,
+    )
+    export_normals: bpy.props.BoolProperty(
+        name='Export Normals',
+        description='Whether to export normal vectors',
+        default=True,
+    )
+    export_tangents: bpy.props.BoolProperty(
+        name='Export Tangents',
+        description='Whether to export tangent vectors',
+        default=False,
+    )
+
     def draw(self, context):
         layout = self.layout
         layout.use_property_split = True
-        layout.use_property_decorate = False  # No animation.
+        layout.use_property_decorate = False
+        header, body = layout.panel('SF3_export_data', default_closed=False)
+        header.label(text='Data')
+        if body:
+            body.prop(self, 'export_normals')
+            body.prop(self, 'export_tangents')
+        header, body = layout.panel('SF3_export_material', default_closed=False)
+        header.label(text='Material')
+        if body:
+            body.prop(self, 'image_type')
+            body.prop(self, 'image_quality')
 
     def invoke(self, context, event):
-        return ExportHelper.invoke_popup(self, context, event)
+        return ExportHelper.invoke(self, context, event)
 
     def execute(self, context):
         return self.export_sf3(context)
 
     def export_sf3(self, context):
         config = {
-            'image_type': 'PNG',
-            'image_quality': 80,
-            'export_normals': True,
-            'export_tangents': False,
+            'filepath': self.filepath,
+            'image_type': self.image_type,
+            'image_quality': self.image_quality,
+            'export_normals': self.export_normals,
+            'export_tangents': self.export_tangents,
         }
         return export_model(self.filepath, config)
 
