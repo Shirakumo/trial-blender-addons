@@ -3,9 +3,18 @@ import os
 from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 
-def save_node(file, node):
-    ## TODO: write out images
-    pass
+def save_image(file, src_image, config):
+    image = src_image.copy()
+    image.update()
+    image.scale(*src_image.size)
+    # Options: 'BMP', 'IRIS', 'PNG', 'JPEG', 'JPEG2000', 'TARGA', 'TARGA_RAW', 'CINEON', 'DPX', 'OPEN_EXR_MULTILAYER', 'OPEN_EXR', 'HDR', 'TIFF', 'WEBP'
+    image.file_format = config.image_type
+    image.filepath_raw = file
+    if file_format in ["JPEG", "WEBP"]:
+        image.save(quality=config['image_quality'])
+    else:
+        image.save()
+    bpy.data.images.remove(image, do_unlink=True)
 
 def export_model(file, obj, config):
     print("Exporting to "+file)
@@ -34,7 +43,7 @@ def export_model(file, obj, config):
         outp = nodes.get("Material Output")
         def try_add(input, bit):
             if 0 < len(input.links):
-                tex = save_node(os.path.join(dir, name), input.links[0])
+                tex = save_image(os.path.join(dir, name), input.links[0].image, config)
                 if tex:
                     material_type = material_type | bit
                     textures.append(tex)
@@ -90,8 +99,13 @@ class ExportSF3(Operator, ExportHelper):
         return self.export_sf3(context)
 
     def export_sf3(self, context):
-        export_settings = {}
-        return export_model(self.filepath, export_settings)
+        config = {
+            'image_type': 'PNG',
+            'image_quality': 80,
+            'export_normals': True,
+            'export_tangents': False,
+        }
+        return export_model(self.filepath, config)
 
 def menu_func_export(self, context):
     self.layout.operator(ExportSF3.bl_idname, text='Simple File Format Family (.sf3)')
