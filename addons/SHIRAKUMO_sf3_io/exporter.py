@@ -3,6 +3,11 @@ import os
 from bpy.types import Operator
 from bpy_extras.io_utils import ExportHelper
 
+def node_input(node, input):
+    if 0 < len(node.inputs[input].links):
+        return node.inputs[input].links[0].from_node
+    return None
+
 def save_image(file, src_image, config):
     if config.image_type == 'None':
         return file
@@ -40,22 +45,47 @@ def export_model(file, obj, config):
     ## TODO: flatten vertex arrays together
 
     if 0 < len(obj.data.materials):
-        nodes = obj.data.materials[0].node_tree.nodes
-        bsdf = nodes.get("Principled BSDF")
-        outp = nodes.get("Material Output")
-        def try_add(input, bit):
-            if 0 < len(input.links):
-                tex = save_image(os.path.join(dir, name), input.links[0].image, config)
+        def try_add(tex_node, bit):
+            if tex_node is not None:
+                tex = save_image(os.path.join(dir, name), tex_node.image, config)
                 if tex:
                     material_type = material_type | bit
                     textures.append(tex)
         
-        try_add(bsdf.inputs('Base Color'), 'albedo', 1)
-        try_add(bsdf.inputs('Normal'), 'normal', 2)
+        nodes = obj.data.materials[0].node_tree.nodes
+        bsdf = nodes.get("Principled BSDF")
+        outp = nodes.get("Material Output")
+        
+        try_add(node_input(bsdf, 'Base Color'), 'albedo', 1)
+        try_add(node_input(bsdf, 'Normal'), 'normal', 2)
+        # Decode the node mess to extract MRO or separeted textures.
+        metallic = node_input(bsdf, 'Metallic')
+        roughness = node_input(bsdf, 'Roughness')
+        occlusion = node_input(outp, 'Surface')
+        if isinstance(occlusion, bpy.types.ShaderNodeMixShader):
+            ## The occlusion is encoded as a mix on the shader output
+            occlusion = node_input(occlusion, 0)
+        if (isinstance(metallic, bpy.types.ShaderNodeSeparateColor) and
+            metallic == roughness and metallic == occlusion):
+            try_add(metallic, 'metallic', 4)
+        else:
+            if isinstance(metallic, bpy.types.ShaderNodeTexImage):
+                try_add(metallic, 'metalness', 8)
+            if isinstance(roughness, bpy.types.ShaderNodeTexImage):
+                try_add(roughness, 'roughness', 16)
+            if isinstance(occlusion, bpy.types.ShaderNodeTexImage):
+                try_add(occlusion, 'occlusion', 32)
+        # If we don't have any PBR textures yet, add the specular texture.
         if 0 == material_type & 0b111100:
-            try_add(bsdf.inputs('Specular Tint'), 'specular', 64)
-        try_add(bsdf.inputs('Emission Color'), 'emissive', 128)
-        # TODO: decode metallic and separated mro
+            try_add(node_input(bsdf, 'Specular Tint'), 'specular', 64)
+        try_add(node_input(bsdf, 'Emission Color'), 'emissive', 128)
+
+    # Re-wrap textures in String2
+    for i in range(0, len(textures)):
+        str = Sf3Model.String2()
+        str.value = textures[i]
+        str.len = len(str.value.encode('utf-8'))+1
+        textures[i] = str
     
     # Kaitai serialization is really.... really.... annoyingly cumbersome
     model = Sf3Model()
@@ -63,15 +93,15 @@ def export_model(file, obj, config):
     model.format_id = b"\x05"
     model.checksum = 0
     model.null_terminator = b"\x00"
-    mod = model.model = Sf3Model.Model(_parent=model)
-    mod.format = Sf3Model.VertexFormat(_parent=mod)
+    mod = model.model = Sf3Model.Model()
+    mod.format = Sf3Model.VertexFormat()
     mod.format.raw = vertex_type
-    mod.material_type = Sf3Model.MaterialType(_parent=mod)
+    mod.material_type = Sf3Model.MaterialType()
     mod.material_type.raw = material_type
     mod.material_size = sum([str.len+2 for str in textures])
-    mod.material = Sf3Model.Material(_parent=mod)
+    mod.material = Sf3Model.Material()
     mod.material.textures = textures
-    mod.vertex_data = Sf3Model.VertexData(_parent=mod)
+    mod.vertex_data = Sf3Model.VertexData()
     mod.vertex_data.face_count = len(faces)
     mod.vertex_data.faces = faces
     mod.vertex_data.vertex_count = len(vertices)

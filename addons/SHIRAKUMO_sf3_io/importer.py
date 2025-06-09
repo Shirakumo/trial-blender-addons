@@ -68,44 +68,45 @@ def import_model(file, config):
             
         if mod.material_type.has_albedo:
             tex = load_texture('albedo')
-            mat.node_tree.links.new(bsdf.inputs('Base Color'), tex.outputs('Color'))
+            mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
+            mat.node_tree.links.new(bsdf.inputs['Alpha'], tex.outputs['Alpha'])
             offset += 1
         if mod.material_type.has_normal:
             tex = load_texture('normal')
-            mat.node_tree.links.new(bsdf.inputs('Normal'), tex.outputs('Color'))
+            mat.node_tree.links.new(bsdf.inputs['Normal'], tex.outputs['Color'])
             offset += 1
         if mod.material_type.has_metallic:
             tex = load_texture('metallic')
             sep = mat.node_tree.nodes.new('ShaderNodeSeparateColor')
             mix = mat.node_tree.nodes.new('ShaderNodeMixShader')
-            mat.node_tree.links.new(bsdf.inputs('Metallic'), sep.outputs('Red'))
-            mat.node_tree.links.new(bsdf.inputs('Roughness'), sep.outputs('Green'))
-            mat.node_tree.links.new(mix.inputs[1], sep.outputs('Blue'))
-            mat.node_tree.links.new(mix.inputs[2], bsdf.outputs[0])
+            mat.node_tree.links.new(bsdf.inputs['Metallic'], sep.outputs['Red'])
+            mat.node_tree.links.new(bsdf.inputs['Roughness'], sep.outputs['Green'])
+            mat.node_tree.links.new(mix.inputs[0], sep.outputs['Blue'])
+            mat.node_tree.links.new(mix.inputs[1], bsdf.outputs[0])
             mat.node_tree.links.new(mix.outputs[0], outp.inputs['Surface'])
             offset += 1
         if mod.material_type.has_metalness:
             tex = load_texture('metalness')
-            mat.node_tree.links.new(bsdf.inputs('Metallic'), tex.outputs('Color'))
+            mat.node_tree.links.new(bsdf.inputs['Metallic'], tex.outputs['Color'])
             offset += 1
         if mod.material_type.has_roughness:
             tex = load_texture('roughness')
-            mat.node_tree.links.new(bsdf.inputs('Roughness'), tex.outputs('Color'))
+            mat.node_tree.links.new(bsdf.inputs['Roughness'], tex.outputs['Color'])
             offset += 1
         if mod.material_type.has_occlusion:
             tex = load_texture('occlusion')
             mix = mat.node_tree.nodes.new('ShaderNodeMixShader')
-            mat.node_tree.links.new(mix.inputs[1], tex.outputs('Color'))
+            mat.node_tree.links.new(mix.inputs[1], tex.outputs['Color'])
             mat.node_tree.links.new(mix.inputs[2], bsdf.outputs[0])
             mat.node_tree.links.new(mix.outputs[0], outp.inputs['Surface'])
             offset += 1
         if mod.material_type.has_specular:
             tex = load_texture('specular')
-            mat.node_tree.links.new(bsdf.inputs('Specular Tint'), tex.outputs('Color'))
+            mat.node_tree.links.new(bsdf.inputs['Specular Tint'], tex.outputs['Color'])
             offset += 1
         if mod.material_type.has_emission:
             tex = load_texture('emission')
-            mat.node_tree.links.new(bsdf.inputs('Emission Color'), tex.outputs('Color'))
+            mat.node_tree.links.new(bsdf.inputs['Emission Color'], tex.outputs['Color'])
             offset += 1
         
     return {'FINISHED'}
