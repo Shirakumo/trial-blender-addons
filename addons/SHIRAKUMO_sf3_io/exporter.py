@@ -23,26 +23,71 @@ def save_image(file, src_image, config):
         image.save()
     bpy.data.images.remove(image, do_unlink=True)
 
+def zup2yup(x):
+    for i in range(0, len(x), 3):
+        y = x[i+1]
+        x[i+1] = x[i+2]
+        x[i+2] = -y
+    return x
+
+def flatten_vertex_attributes(vertex_attributes):
+    vertices = []
+    # First attribute is always positions, so triplets
+    vert_count = len(vertex_attributes[0])/3
+    for i in range(vert_count):
+        for a in vertex_attributes:
+            stride = len(a)/vert_count
+            for v in range(i*stride, (i+1)*stride):
+                vertices.append(a[v])
+    return vertices
+
 def export_model(file, obj, config):
     print("Exporting to "+file)
     dir = os.path.dirname(file)
-    vertices = []
     faces = []
-    textures = []
     vertex_type = 1
     material_type = 0
     mesh = obj.data.meshes[0]
-    
-    ## TODO: Split vertices where needed (UVs, normals, etc)
+    mesh.calc_loop_triangles()
+    vertex_attributes = []
+
+    ## We first duplicate every vertex for every face.
+    indices = [0] * (len(mesh.loop_triangles)*3)
+    mesh.loop_triangles.foreach_get('loops', indices)
+    vertex_attributes.append(zup2yup(indices))
+    vertices = [0.0] * (len(indices)*3)
+    for v in indices:
+        vertex = mesh.vertices[v].co
+        faces.append(len(vertices)/3)
+        vertices.append(vertex[0])
+        vertices.append(vertex[1])
+        vertices.append(vertex[2])
+    vertices = zup2yup(vertices)
+
     if 0 < len(mesh.uv_layers):
         vertex_type = vertex_type | 2
+        uvs = [0.0] * (len(mesh.loops)*2)
+        mesh.uv_layers[0].uv.foreach_get('vector', uvs)
+        vertex_attributes.append(uvs)
     if 0 < len(mesh.color_attributes):
         vertex_type = vertex_type | 4
+        colors = [0.0] * (len(mesh.loops)*3)
+        mesh.color_attributes[0].data.foreach_get('color', colors)
+        vertex_attributes.append(colors)
     if config['export_normals']:
         vertex_type = vertex_type | 8
+        normals = [0.0] * (len(mesh.loops)*3)
+        mesh.corner_normals.foreach_get('vector', normals)
+        vertex_attributes.append(zup2yup(normals))
     if config['export_tangents']:
         vertex_type = vertex_type | 16
-    ## TODO: flatten vertex arrays together
+        tangents = [0.0] * (len(mesh.loops)*3)
+        mesh.loops.foreach_get('tangent', tangents)
+        vertex_attributes.append(zup2yup(tangents))
+
+    ## TODO: deduplicate vertices
+
+    vertices = flatten_vrtex_attributes(vertex_attributes)
 
     if 0 < len(obj.data.materials):
         def try_add(tex_node, bit):
