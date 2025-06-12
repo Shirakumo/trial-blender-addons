@@ -89,6 +89,8 @@ def ensure_ao_material(obj, size=None, resize=True):
         mat = bpy.data.materials.new(name="AO_Material")
         mat.use_nodes = True
         obj.data.materials.append(mat)
+    if not obj.data.uv_layers.get("AO"):
+        obj.data.uv_layers.new(name='AO')
 
     mat = obj.data.materials[0]
     glTF = mat.node_tree.nodes.get('Group')
@@ -139,7 +141,9 @@ def rebake_object(obj, resize=True):
         # Modify the material to make it opaque, otherwise the AO bake fucks up
         alpha = obj.data.materials[0].node_tree.nodes.get('Principled BSDF').inputs['Alpha']
         saved_alpha = alpha.default_value
+        saved_uv = obj.data.uv_layers.active
         alpha.default_value = 1.0
+        obj.data.uv_layers.active = obj.data.uv_layers["AO"]
 
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
@@ -148,6 +152,7 @@ def rebake_object(obj, resize=True):
         bpy.context.scene.render.engine = 'CYCLES'
         bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', use_clear=True)
         alpha.default_value = saved_alpha
+        obj.data.uv_layers.active = saved_uv
 
 def export_single_object(obj=None, path=None):
     if obj == None:
