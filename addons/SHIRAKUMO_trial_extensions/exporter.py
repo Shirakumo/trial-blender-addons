@@ -39,7 +39,7 @@ class glTF2ExportUserExtension:
                 extension=props)
 
     def gather_scene_hook(self, gltf2_node, blender_object, export_settings):
-        bpy.context.scene.shirakumo_trial_file_properties.export_path = export_settings['gltf_filepath']
+        bpy.context.scene.shirakumo_trial_file_properties.export_path = bpy.path.relpath(export_settings['gltf_filepath'])
         if not self.properties.enabled:
             return
         bg = blender_object.world.node_tree.nodes['Background']

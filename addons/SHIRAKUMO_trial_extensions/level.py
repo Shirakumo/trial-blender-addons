@@ -233,7 +233,7 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
             return "Re-export the current file to "+path
     
     def prepare(self, context, event):
-        path = context.scene.shirakumo_trial_file_properties.export_path
+        path = bpy.path.abspath(context.scene.shirakumo_trial_file_properties.export_path)
         args = {"check_existing": False,
                 "use_visible": True,
                 "export_lights": True,
