@@ -60,6 +60,7 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
         obj.display_type = "BOUNDS"
         obj.display_bounds_type = self.shape
         obj.rigid_body.collision_shape = self.shape
+        obj.khr_physics_extra_props.is_trigger = True
         obj.shirakumo_trial_physics_props.filter = self.filter
         self.customize_object(obj)
         
