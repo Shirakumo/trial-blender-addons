@@ -51,6 +51,15 @@ def hide_all(filter):
             else:
                 obj.hide_render = False
 
+def is_level_file():
+    for obj in bpy.data.objects:
+        if (obj.type == 'MESH' and
+            obj.rigid_body and
+            obj.rigid_body.collision_shape == 'MESH' and
+            obj.khr_physics_extra_props.infinite_mass == True):
+            return True
+    return False
+
 def is_bakable_object(obj):
     return (obj.type == 'MESH' and
             (not obj.rigid_body or
@@ -238,7 +247,12 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
                 "use_visible": True,
                 "export_lights": True,
                 "export_cameras": True,
-                "export_def_bones": True}
+                "export_def_bones": True,
+                "export_texcoords": True,
+                "export_normals": True,
+                "export_materials": "EXPORT",
+                "export_yup": True,
+                "export_apply": is_level_file()}
         if path == '' or event.ctrl:
             self.steps.append(lambda : bpy.ops.export_scene.gltf('INVOKE_DEFAULT', **args))
         else:
