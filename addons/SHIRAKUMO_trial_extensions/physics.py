@@ -201,6 +201,13 @@ class SHIRAKUMO_TRIAL_OT_add_progression_trigger(GenericTrigger):
         layout.prop(self, 'mode', expand=False)
         layout.prop(self, 'condition', expand=True)
 
+def camera_type_changed(self, context):
+    obj = context.object
+    if obj.shirakumo_trial_physics_props.camera_state == 'FIXED':
+        obj.children[0].hide_set(False)
+    else:
+        obj.children[0].hide_set(True)
+
 class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
     bl_idname = "shirakumo_trial.add_camera_trigger"
     bl_label = "Camera"
@@ -383,6 +390,7 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
             ("ANIMATED", "Animated", "", 3),
         ],
         default="FREE", options=set(),
+        update=camera_type_changed,
         description="The state to switch the camera into")
     target: bpy.props.StringProperty(
         name="Target",
