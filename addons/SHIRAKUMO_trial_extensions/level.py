@@ -120,7 +120,7 @@ def ensure_ao_material(obj, size=None, resize=True):
         size = ao_size(obj, size)
         if tex.image.size[0] != size:
             tex.image.scale(size, size)
-    return size
+    return (mat, size)
 
 def ensure_physics_object(obj):
     if not obj.rigid_body:
@@ -137,11 +137,12 @@ def rebake_object(obj, resize=True):
         obj.hide_render = False
 
     with Selection([obj]) as sel:
-        size = ensure_ao_material(obj, None, resize)
+        mat, size = ensure_ao_material(obj, None, resize)
         # Modify the material to make it opaque, otherwise the AO bake fucks up
-        alpha = obj.data.materials[0].node_tree.nodes.get('Principled BSDF').inputs['Alpha']
+        alpha = mat.node_tree.nodes.get('Principled BSDF').inputs['Alpha']
         saved_alpha = alpha.default_value
         saved_uv = obj.data.uv_layers.active
+        saved_node = mat.node_tree.nodes.active
         alpha.default_value = 1.0
         obj.data.uv_layers.active = obj.data.uv_layers["AO"]
 
@@ -150,9 +151,13 @@ def rebake_object(obj, resize=True):
         bpy.ops.uv.smart_project(island_margin=1/size)
         bpy.ops.object.mode_set(mode='OBJECT')
         bpy.context.scene.render.engine = 'CYCLES'
-        bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', use_clear=True)
+        bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', uv_layer='AO', use_clear=True)
+        ## NOTE: This currently does not do much since Blender's bake runs in the
+        ##       background, and changes shit after this returns, and we have no
+        ##       way to observe when the job is done to restore our settings. Fun.
         alpha.default_value = saved_alpha
         obj.data.uv_layers.active = saved_uv
+        mat.node_tree.nodes.active = saved_node
 
 def export_single_object(obj=None, path=None):
     if obj == None:
