@@ -14,7 +14,14 @@ def center_in_view(obj):
     middle = [region.width / 2.0, region.height / 2.0]
     center = view3d_utils.region_2d_to_origin_3d(region, bpy.context.space_data.region_3d, middle)
     forward = view3d_utils.region_2d_to_vector_3d(region, bpy.context.space_data.region_3d, middle)
-    obj.location = center + forward*10.0
+
+    hit, loc, normal, *_ = bpy.context.scene.ray_cast(bpy.context.view_layer.depsgraph, center, forward)
+    while hit:
+        center = loc + forward
+        if normal @ forward < 0.0:
+            break
+        hit, loc, normal, *_ = bpy.context.scene.ray_cast(bpy.context.view_layer.depsgraph, center, forward)
+    obj.location = center
 
 class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
