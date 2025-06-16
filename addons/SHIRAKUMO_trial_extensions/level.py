@@ -51,12 +51,16 @@ def hide_all(filter):
             else:
                 obj.hide_render = False
 
-def is_level_file():
-    for obj in bpy.data.objects:
-        if (obj.type == 'MESH' and
+def is_level_geo(obj):
+    return (isinstance(obj, bpy.types.Object) and
+            obj.type == 'MESH' and
             obj.rigid_body and
             obj.rigid_body.collision_shape == 'MESH' and
-            obj.khr_physics_extra_props.infinite_mass == True):
+            obj.khr_physics_extra_props.infinite_mass == True)
+
+def is_level_file():
+    for obj in bpy.data.objects:
+        if is_level_geo(obj):
             return True
     return False
 
@@ -298,6 +302,18 @@ class SHIRAKUMO_TRIAL_OT_make_level(bpy.types.Operator):
             obj.khr_physics_extra_props.infinite_mass = True
         return {'FINISHED'}
 
+class SHIRAKUMO_TRIAL_OT_toggle_immovable(bpy.types.Operator):
+    bl_idname = "shirakumo_trial.toggle_immovable"
+    bl_label = "Toggle Immovable"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = "Turn the object into a fixed physics object that can't be moved or vice-versa."
+    
+    def invoke(self, context, event):
+        objects = [ x for x in context.selected_objects if x.type == 'MESH' ]
+        for obj in objects:
+            obj.khr_physics_extra_props.infinite_mass = not obj.khr_physics_extra_props.infinite_mass
+        return {'FINISHED'}
+
 class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
     bl_idname = "shirakumo_trial.export_as_object"
     bl_label = "Export as Object"
@@ -334,7 +350,12 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for Selected")
             else:
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for All")
-            layout.column().operator("shirakumo_trial.make_level", text="Make Level Geo")
+            if not is_level_geo(context.object):
+                layout.column().operator("shirakumo_trial.make_level", text="Make Level Geo")
+                if context.object.khr_physics_extra_props.infinite_mass:
+                    layout.column().operator("shirakumo_trial.toggle_immovable", text="Make Movable")
+                else:
+                    layout.column().operator("shirakumo_trial.toggle_immovable", text="Make Immovable")
             layout.column().operator("shirakumo_trial.reexport", text="ReExport")
             layout.column().operator("shirakumo_trial.export_as_object", text="Export as Object")
 
@@ -356,6 +377,7 @@ registered_classes = [
     SHIRAKUMO_TRIAL_OT_rebake,
     SHIRAKUMO_TRIAL_OT_reexport,
     SHIRAKUMO_TRIAL_OT_make_level,
+    SHIRAKUMO_TRIAL_OT_toggle_immovable,
     SHIRAKUMO_TRIAL_OT_export_as_object,
     SHIRAKUMO_TRIAL_PT_edit_panel,
     SHIRAKUMO_TRIAL_file_properties,
