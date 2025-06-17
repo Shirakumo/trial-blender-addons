@@ -3,6 +3,8 @@ import bmesh
 from pathlib import Path
 from math import sqrt
 
+base_material_name = 'BaseMaterial'
+
 def message_box(message="", title="Trial", icon='INFO'):
     def draw(self, context):
         self.layout.label(text=message)
@@ -51,12 +53,22 @@ def hide_all(filter):
             else:
                 obj.hide_render = False
 
+def is_base_material(mat):
+    return mat and mat.name.startswith(base_material_name)
+
 def is_level_geo(obj):
     return (isinstance(obj, bpy.types.Object) and
             obj.type == 'MESH' and
             obj.rigid_body and
             obj.rigid_body.collision_shape == 'MESH' and
             obj.khr_physics_extra_props.infinite_mass == True)
+
+def is_prop_geo(obj):
+    return (isinstance(obj, bpy.types.Object) and
+            obj.type == 'MESH' and
+            obj.rigid_body and
+            0 < len(obj.data.materials) and
+            is_base_material(obj.data.materials[0]))
 
 def is_level_file():
     for obj in bpy.data.objects:
@@ -88,17 +100,32 @@ def ao_size(obj, size=None):
         size = 10000
     return size
 
-def ensure_ao_material(obj, size=None, resize=True):
-    if not obj.data.materials:
-        mat = bpy.data.materials.new(name="AO_Material")
+def ensure_base_material_exists():
+    if bpy.data.materials.get(base_material_name) is None:
+        mat = bpy.data.materials.new(name=base_material_name)
         mat.use_nodes = True
-        obj.data.materials.append(mat)
-    if not obj.data.uv_layers.get("AO"):
-        obj.data.uv_layers.new(name='AO')
+    return bpy.data.materials[base_material_name]
 
-    mat = obj.data.materials[0]
+def ensure_base_material(obj, force=True):
+    if 0 == len(obj.data.materials):
+        mat = ensure_base_material_exists().copy()
+        obj.data.materials.append(mat)
+    elif obj.data.materials[0] is None:
+        mat = ensure_base_material_exists().copy()
+        obj.data.materials[0] = mat
+    elif force and not is_base_material(obj.data.materials[0]):
+        mat = ensure_base_material_exists().copy()
+        obj.data.materials[0] = mat
+    if obj.data.uv_layers.get("UVMap") is None:
+        obj.data.uv_layers.new(name='UVMap')
+    if obj.data.uv_layers.get("AO") is None:
+        obj.data.uv_layers.new(name='AO')
+    return obj.data.materials[0]
+
+def ensure_ao_material(obj, size=None, resize=True):
+    mat = ensure_base_material(obj, force=False)
     glTF = mat.node_tree.nodes.get('Group')
-    if glTF == None:
+    if glTF is None:
         bpy.context.preferences.addons['io_scene_gltf2'].preferences.settings_node_ui = True
         original_type = bpy.context.area.type
         bpy.context.area.type = 'NODE_EDITOR'
@@ -106,25 +133,18 @@ def ensure_ao_material(obj, size=None, resize=True):
         bpy.ops.node.gltf_settings_node_operator('INVOKE_DEFAULT')
         bpy.context.area.type = original_type
         glTF = mat.node_tree.nodes.get('Group')
-    if not glTF.inputs['Occlusion'].links:
+    if 0 == len(glTF.inputs['Occlusion'].links):
         size = ao_size(obj, size)
         tex = mat.node_tree.nodes.new("ShaderNodeTexImage")
         tex.image = bpy.data.images.new("AO", size, size)
         mat.node_tree.links.new(glTF.inputs['Occlusion'], tex.outputs['Color'])
 
     tex = glTF.inputs['Occlusion'].links[0].from_node
-    tex.select = True
-    mat.node_tree.nodes.active = tex
-
-    bsdf = mat.node_tree.nodes.get('Principled BSDF')
-    #if not bsdf.inputs['Base Color'].links:
-    #    mat.node_tree.links.new(bsdf.inputs['Base Color'], tex.outputs['Color'])
-
     if resize:
         size = ao_size(obj, size)
         if tex.image.size[0] != size:
             tex.image.scale(size, size)
-    return (mat, size)
+    return (mat, size, tex)
 
 def ensure_physics_object(obj):
     if not obj.rigid_body:
@@ -141,14 +161,22 @@ def rebake_object(obj, resize=True):
         obj.hide_render = False
 
     with Selection([obj]) as sel:
-        mat, size = ensure_ao_material(obj, None, resize)
+        mat, size, tex = ensure_ao_material(obj, None, resize)
+        bsdf = mat.node_tree.nodes.get('Principled BSDF')
         # Modify the material to make it opaque, otherwise the AO bake fucks up
-        alpha = mat.node_tree.nodes.get('Principled BSDF').inputs['Alpha']
+        alpha = bsdf.inputs['Alpha']
+        saved_normal = None
+        if 0 < len(bsdf.inputs['Normal'].links):
+            link = bsdf.inputs['Normal'].links[0]
+            saved_normal = link.from_node
+            mat.node_tree.links.remove(link)
         saved_alpha = alpha.default_value
-        saved_uv = obj.data.uv_layers.active
+        saved_uv = obj.data.uv_layers.active_index
         saved_node = mat.node_tree.nodes.active
         alpha.default_value = 1.0
         obj.data.uv_layers.active = obj.data.uv_layers["AO"]
+        tex.select = True
+        mat.node_tree.nodes.active = tex
 
         bpy.ops.object.mode_set(mode='EDIT')
         bpy.ops.mesh.select_all(action='SELECT')
@@ -159,12 +187,21 @@ def rebake_object(obj, resize=True):
         ## NOTE: This currently does not do much since Blender's bake runs in the
         ##       background, and changes shit after this returns, and we have no
         ##       way to observe when the job is done to restore our settings. Fun.
-        alpha.default_value = saved_alpha
-        obj.data.uv_layers.active = saved_uv
-        mat.node_tree.nodes.active = saved_node
+        ##       we try anyway by hoping 3 seconds is enough lol.
+        def restore():
+            print(saved_node.image)
+            alpha.default_value = saved_alpha
+            obj.data.uv_layers.active_index = saved_uv
+            for node in mat.node_tree.nodes:
+                node.select = False
+            saved_node.select = True
+            mat.node_tree.nodes.active = saved_node
+            if saved_normal:
+                mat.node_tree.links.new(bsdf.inputs['Normal'], saved_normal.outputs['Color'])
+        bpy.app.timers.register(restore, first_interval=3)
 
 def export_single_object(obj=None, path=None):
-    if obj == None:
+    if obj is None:
         obj = bpy.context.selected_objects
     if not type(obj) is list:
         obj = [obj]
@@ -302,6 +339,24 @@ class SHIRAKUMO_TRIAL_OT_make_level(bpy.types.Operator):
             obj.khr_physics_extra_props.infinite_mass = True
         return {'FINISHED'}
 
+class SHIRAKUMO_TRIAL_OT_make_prop(bpy.types.Operator):
+    bl_idname = "shirakumo_trial.make_prop"
+    bl_label = "Mark as Prop"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = "Turn the object a prop by setting its material and so on."
+    
+    def invoke(self, context, event):
+        objects = context.selected_objects
+        if len(objects) == 0:
+            objects = bpy.data.objects
+        objects = [ x for x in objects if x.type == 'MESH' ]
+        push_selection(objects)
+        for obj in objects:
+            ensure_physics_object(obj)
+            ensure_base_material(obj)
+            ensure_ao_material(obj)
+        return {'FINISHED'}
+
 class SHIRAKUMO_TRIAL_OT_toggle_immovable(bpy.types.Operator):
     bl_idname = "shirakumo_trial.toggle_immovable"
     bl_label = "Toggle Immovable"
@@ -339,20 +394,22 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
 
     def draw(self, context):
         layout = self.layout
-
-        if not hasattr(context.object, 'shirakumo_operator_progress'):
+        obj = context.object
+        if not hasattr(obj, 'shirakumo_operator_progress'):
             pass
-        elif 0 <= context.object.shirakumo_operator_progress:
-            layout.column().progress(text="Working..." , factor=context.object.shirakumo_operator_progress)
+        elif 0 <= obj.shirakumo_operator_progress:
+            layout.column().progress(text="Working..." , factor=obj.shirakumo_operator_progress)
         else:
             layout.column().prop(context.scene.shirakumo_trial_file_properties, "ao_map_resolution")
             if 0 < len(context.selected_objects):
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for Selected")
             else:
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for All")
-            if not is_level_geo(context.object):
+            if not is_level_geo(obj) and not is_prop_geo(obj):
                 layout.column().operator("shirakumo_trial.make_level", text="Make Level Geo")
-                if context.object.khr_physics_extra_props.infinite_mass:
+                layout.column().operator("shirakumo_trial.make_prop", text="Make Prop Geo")
+            elif not is_level_geo(obj):
+                if obj.khr_physics_extra_props.infinite_mass:
                     layout.column().operator("shirakumo_trial.toggle_immovable", text="Make Movable")
                 else:
                     layout.column().operator("shirakumo_trial.toggle_immovable", text="Make Immovable")
@@ -377,6 +434,7 @@ registered_classes = [
     SHIRAKUMO_TRIAL_OT_rebake,
     SHIRAKUMO_TRIAL_OT_reexport,
     SHIRAKUMO_TRIAL_OT_make_level,
+    SHIRAKUMO_TRIAL_OT_make_prop,
     SHIRAKUMO_TRIAL_OT_toggle_immovable,
     SHIRAKUMO_TRIAL_OT_export_as_object,
     SHIRAKUMO_TRIAL_PT_edit_panel,
