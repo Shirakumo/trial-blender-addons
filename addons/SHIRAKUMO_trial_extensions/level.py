@@ -45,6 +45,13 @@ class Selection(object):
     def __exit__(self, *args):
         push_selection(self.previous)
 
+def unique_meshes(objects):
+    cache = {}
+    for obj in objects:
+        if obj.data not in cache:
+            cache[obj.data] = obj
+    return cache.values()
+
 def hide_all(filter):
     for obj in bpy.data.objects:
         if obj.type == 'MESH':
@@ -157,14 +164,17 @@ def ensure_physics_object(obj):
         with Selection([obj]) as sel:
             bpy.ops.rigidbody.objects_add()
 
+def is_solo_rebake(obj):
+    return is_prop_geo(obj) or (obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
+
 def rebake_object(obj, resize=True):
     print("Rebake "+obj.name)
     
-    if not obj.rigid_body or obj.khr_physics_extra_props.infinite_mass:
-        hide_all(lambda obj : obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
-    else:
+    if is_solo_rebake(obj):
         hide_all(lambda obj : True)
         obj.hide_render = False
+    else:
+        hide_all(lambda obj : obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
 
     with Selection([obj]) as sel:
         mat, size, tex = ensure_ao_material(obj, None, resize)
@@ -282,7 +292,7 @@ class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
         objects = context.selected_objects
         if len(objects) == 0:
             objects = bpy.data.objects
-        for obj in objects:
+        for obj in unique_meshes(objects):
             if is_bakable_object(obj):
                 self.steps.append(lambda o=obj : rebake_object(o))
 
