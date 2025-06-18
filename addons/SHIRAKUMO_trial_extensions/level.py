@@ -107,15 +107,21 @@ def ensure_base_material_exists():
     return bpy.data.materials[base_material_name]
 
 def ensure_base_material(obj, force=True):
+    def set():
+        mat = ensure_base_material_exists().copy()
+        obj.data.materials[0] = mat
+        bsdf = mat.node_tree.nodes.get('Principled BSDF')
+        if bsdf and 0 < len(bsdf.inputs['Base Color'].links):
+            input = bsdf.inputs['Base Color'].links[0].from_node
+            input.select = True
+            mat.node_tree.nodes.active = input
     if 0 == len(obj.data.materials):
-        mat = ensure_base_material_exists().copy()
-        obj.data.materials.append(mat)
+        obj.data.materials.append(None)
+        set()
     elif obj.data.materials[0] is None:
-        mat = ensure_base_material_exists().copy()
-        obj.data.materials[0] = mat
+        set()
     elif force and not is_base_material(obj.data.materials[0]):
-        mat = ensure_base_material_exists().copy()
-        obj.data.materials[0] = mat
+        set()
     if obj.data.uv_layers.get("UVMap") is None:
         obj.data.uv_layers.new(name='UVMap')
     if obj.data.uv_layers.get("AO") is None:
