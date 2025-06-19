@@ -294,6 +294,7 @@ class SHIRAKUMO_TRIAL_OT_make_prop(bpy.types.Operator):
         push_selection(objects)
         for obj in objects:
             ensure_physics_object(obj, type='PROP')
+            obj.rigid_body.use_start_deactivated = True
             ensure_base_material(obj)
             ensure_ao_material(obj)
         return {'FINISHED'}
@@ -308,6 +309,7 @@ class SHIRAKUMO_TRIAL_OT_toggle_immovable(bpy.types.Operator):
         objects = [ x for x in context.selected_objects if x.type == 'MESH' ]
         for obj in objects:
             obj.khr_physics_extra_props.infinite_mass = not obj.khr_physics_extra_props.infinite_mass
+            obj.rigid_body.use_start_deactivated = True
         return {'FINISHED'}
 
 class SHIRAKUMO_TRIAL_OT_export_as_object(SteppedOperator):
