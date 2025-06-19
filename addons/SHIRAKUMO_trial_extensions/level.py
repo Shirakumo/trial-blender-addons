@@ -2,84 +2,16 @@ import bpy
 import bmesh
 from pathlib import Path
 from math import sqrt
+from .utils import *
 
 base_material_name = 'BaseMaterial'
-
-def message_box(message="", title="Trial", icon='INFO'):
-    def draw(self, context):
-        self.layout.label(text=message)
-
-    bpy.context.window_manager.popup_menu(draw, title=title, icon=icon)
-
-def push_selection(new):
-    previous_selected = []
-    for obj in bpy.context.selected_objects:
-        previous_selected.append(obj)
-        obj.select_set(False)
-    for obj in new:
-        obj.select_set(True)
-    return previous_selected
-
-class ObjectMode(object):
-    def __init__(self, new=None):
-        self.previous = None
-        self.new = new
-
-    def __enter__(self):
-        self.previous = bpy.context.object.mode
-        bpy.ops.object.mode_set(mode=self.new)
-        return self
-
-    def __exit__(self ,*args):
-        bpy.ops.object.mode_set(mode=self.previous)
-
-class Selection(object):
-    def __init__(self, new=[]):
-        self.previous = []
-        self.new = new
-        
-    def __enter__(self):
-        self.previous = push_selection(self.new)
-        return self
-    
-    def __exit__(self, *args):
-        push_selection(self.previous)
-
-def unique_meshes(objects):
-    cache = {}
-    for obj in objects:
-        if obj.data not in cache:
-            cache[obj.data] = obj
-    return cache.values()
-
-def hide_all(filter):
-    for obj in bpy.data.objects:
-        if obj.type == 'MESH':
-            if filter(obj):
-                obj.hide_render = True
-            else:
-                obj.hide_render = False
 
 def is_base_material(mat):
     return mat and mat.name.startswith(base_material_name)
 
-def is_level_geo(obj):
-    return (isinstance(obj, bpy.types.Object) and
-            obj.type == 'MESH' and
-            obj.rigid_body and
-            obj.rigid_body.collision_shape == 'MESH' and
-            obj.khr_physics_extra_props.infinite_mass == True)
-
-def is_prop_geo(obj):
-    return (isinstance(obj, bpy.types.Object) and
-            obj.type == 'MESH' and
-            obj.rigid_body and
-            0 < len(obj.data.materials) and
-            is_base_material(obj.data.materials[0]))
-
 def is_level_file():
     for obj in bpy.data.objects:
-        if is_level_geo(obj):
+        if is_environment(obj):
             return True
     return False
 
@@ -87,7 +19,7 @@ def is_bakable_object(obj):
     return (obj.type == 'MESH' and
             (not obj.rigid_body or
              not obj.khr_physics_extra_props or
-             obj.shirakumo_trial_physics_props.type in ['NONE', 'INTERACTABLE']))
+             not is_trigger(obj)))
 
 def object_surface_area(obj):
     bm = bmesh.new()
@@ -159,13 +91,8 @@ def ensure_ao_material(obj, size=None, resize=True):
             tex.image.scale(size, size)
     return (mat, size, tex)
 
-def ensure_physics_object(obj):
-    if not obj.rigid_body:
-        with Selection([obj]) as sel:
-            bpy.ops.rigidbody.objects_add()
-
 def is_solo_rebake(obj):
-    return is_prop_geo(obj) or (obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
+    return is_prop(obj) or (obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
 
 def rebake_object(obj, resize=True):
     print("Rebake "+obj.name)
@@ -205,7 +132,6 @@ def rebake_object(obj, resize=True):
         ##       way to observe when the job is done to restore our settings. Fun.
         ##       we try anyway by hoping 3 seconds is enough lol.
         def restore():
-            print(saved_node.image)
             alpha.default_value = saved_alpha
             obj.data.uv_layers.active_index = saved_uv
             for node in mat.node_tree.nodes:
@@ -325,11 +251,11 @@ class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
         else:
             self.steps.append(lambda : bpy.ops.export_scene.gltf(filepath=path, **args))
 
-class SHIRAKUMO_TRIAL_OT_make_level(bpy.types.Operator):
-    bl_idname = "shirakumo_trial.make_level"
+class SHIRAKUMO_TRIAL_OT_make_environment(bpy.types.Operator):
+    bl_idname = "shirakumo_trial.make_environment"
     bl_label = "Mark as Level Geo"
     bl_options = {'REGISTER', 'UNDO'}
-    bl_description = "Turn the object into level geometry by setting the corresponding physics properties and normalising its transform and geometry."
+    bl_description = "Turn the object into environment geometry by setting the corresponding physics properties and normalising its transform and geometry."
     
     def invoke(self, context, event):
         objects = context.selected_objects
@@ -346,11 +272,10 @@ class SHIRAKUMO_TRIAL_OT_make_level(bpy.types.Operator):
             bpy.ops.mesh.select_all(action='SELECT')
             bpy.ops.mesh.remove_doubles(threshold=0.0001)
             bpy.ops.mesh.select_all(action='DESELECT')
-            # bpy.ops.mesh.select_mode(type = 'FACE')
-            # bpy.ops.mesh.select_interior_faces()
-            # bpy.ops.mesh.delete(type='FACE')
         for obj in objects:
-            ensure_physics_object(obj)
+            ensure_physics_object(obj, type='ENVIRONMENT')
+            ensure_base_material(obj)
+            ensure_ao_material(obj)
             obj.rigid_body.collision_shape = 'MESH'
             obj.khr_physics_extra_props.infinite_mass = True
         return {'FINISHED'}
@@ -368,7 +293,7 @@ class SHIRAKUMO_TRIAL_OT_make_prop(bpy.types.Operator):
         objects = [ x for x in objects if x.type == 'MESH' ]
         push_selection(objects)
         for obj in objects:
-            ensure_physics_object(obj)
+            ensure_physics_object(obj, type='PROP')
             ensure_base_material(obj)
             ensure_ao_material(obj)
         return {'FINISHED'}
@@ -405,7 +330,7 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
     bl_label = "Trial Extensions"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "Edit"
+    bl_category = "Item"
     bl_context = "objectmode"
 
     def draw(self, context):
@@ -419,18 +344,18 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
             layout.column().prop(context.scene.shirakumo_trial_file_properties, "ao_map_resolution")
             if 0 < len(context.selected_objects):
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for Selected")
+                if not is_environment(obj) and not is_prop(obj):
+                    layout.column().operator("shirakumo_trial.make_environment", text="Make Environment")
+                    layout.column().operator("shirakumo_trial.make_prop", text="Make Prop")
+                if is_prop(obj):
+                    if obj.khr_physics_extra_props.infinite_mass:
+                        layout.column().operator("shirakumo_trial.toggle_immovable", text="Make Movable")
+                    else:
+                        layout.column().operator("shirakumo_trial.toggle_immovable", text="Make Immovable")
+                    layout.column().operator("shirakumo_trial.export_as_object", text="Export as Object")
             else:
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for All")
-            if not is_level_geo(obj) and not is_prop_geo(obj):
-                layout.column().operator("shirakumo_trial.make_level", text="Make Level Geo")
-                layout.column().operator("shirakumo_trial.make_prop", text="Make Prop Geo")
-            elif not is_level_geo(obj):
-                if obj.khr_physics_extra_props.infinite_mass:
-                    layout.column().operator("shirakumo_trial.toggle_immovable", text="Make Movable")
-                else:
-                    layout.column().operator("shirakumo_trial.toggle_immovable", text="Make Immovable")
-            layout.column().operator("shirakumo_trial.reexport", text="ReExport")
-            layout.column().operator("shirakumo_trial.export_as_object", text="Export as Object")
+            layout.column().operator("shirakumo_trial.reexport", text="ReExport GLB")
 
 class SHIRAKUMO_TRIAL_file_properties(bpy.types.PropertyGroup):
     ao_map_resolution: bpy.props.IntProperty(
@@ -449,7 +374,7 @@ class SHIRAKUMO_TRIAL_file_properties(bpy.types.PropertyGroup):
 registered_classes = [
     SHIRAKUMO_TRIAL_OT_rebake,
     SHIRAKUMO_TRIAL_OT_reexport,
-    SHIRAKUMO_TRIAL_OT_make_level,
+    SHIRAKUMO_TRIAL_OT_make_environment,
     SHIRAKUMO_TRIAL_OT_make_prop,
     SHIRAKUMO_TRIAL_OT_toggle_immovable,
     SHIRAKUMO_TRIAL_OT_export_as_object,

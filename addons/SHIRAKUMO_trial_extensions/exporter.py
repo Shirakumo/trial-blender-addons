@@ -150,7 +150,8 @@ class glTF2ExportUserExtension:
                                        ("kind", props.interaction_kind))))
             else:
                 self.add_extension(gltf2_node,
-                                   ("virtual", props.virtual, False),
+                                   ("prop", props.type == "PROP", False),
+                                   ("virtual", props.type == "VIRTUAL", False),
                                    ("instanceOf", props.instance_of, ""))
 
     def encode_fcurve(self, fcurve, range):
