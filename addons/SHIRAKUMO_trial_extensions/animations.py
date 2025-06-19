@@ -47,10 +47,10 @@ class SHIRAKUMO_TRIAL_action_properties(bpy.types.PropertyGroup):
     type: bpy.props.EnumProperty(
         name="Type",
         items=[
-            ("DEFAULT", "Default", "", 1),
-            ("BLOCKING", "Blocking", "", 2),
-            ("PHYSICAL", "Physical", "", 3),
-            ("ADDITIVE", "Additive", "", 4)
+            ("DEFAULT", "Default", "Default animation", "BONE_DATA", 1),
+            ("BLOCKING", "Blocking", "Animation that blocks player control", "GROUP_BONE", 2),
+            ("PHYSICAL", "Physical", "Physical root motion animation", "CONSTRAINT_BONE", 3),
+            ("ADDITIVE", "Additive", "Animation that defines a pose variation", "RENDERLAYERS", 4)
         ],
         default="DEFAULT", options=set(),
         update=animation_type_changed,

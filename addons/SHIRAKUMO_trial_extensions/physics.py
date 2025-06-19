@@ -3,6 +3,7 @@ import blf
 import os
 from bpy_extras import object_utils,view3d_utils
 from math import radians,cos
+from .utils import *
 
 def link_to_object_collection(obj, new):
     for collection in obj.users_collection:
@@ -23,214 +24,39 @@ def center_in_view(obj):
         hit, loc, normal, *_ = bpy.context.scene.ray_cast(bpy.context.view_layer.depsgraph, center, forward)
     obj.location = center
 
-class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
-    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
-    
-    shape: bpy.props.EnumProperty(
-        name="Shape",
-        description="The shape of the trigger volume",
-        items=[
-            ("BOX", "Box", "MESH_CUBE", 1),
-            ("SPHERE", "Sphere", "MESH_UVSPHERE", 2),
-            ("CAPSULE", "Capsule", "MESH_CAPSULE", 3),
-            ("CYLINDER", "Cylinder", "MESH_CYLINDER", 4),
-        ])
-    filter: bpy.props.StringProperty(
-        name="Filter",
-        default="T",
-        description="A class filter to apply to the trigger volume")
-
-    def customize_layout(self, layout):
-        pass
-
-    def customize_object(self, obj):
-        pass
-    
-    def draw(self, context):
-        layout = self.layout
-        layout.prop(self, 'shape', expand=False)
-        layout.prop(self, "filter", expand=True)
-        self.customize_layout(layout)
-    
-    def execute(self, context):
-        use_enter_edit_mode = bpy.context.preferences.edit.use_enter_edit_mode
-        bpy.context.preferences.edit.use_enter_edit_mode = False
-
-        bpy.ops.mesh.primitive_cube_add(calc_uvs=False)
-        bpy.ops.rigidbody.objects_add()
-        obj = bpy.context.selected_objects[0]
-        center_in_view(obj)
-        obj.name = self.bl_label
-        obj.color = (1, 0, 1, 1)
+def trigger_type_changed(self, context):
+    obj = context.object
+    if is_trigger(obj):
         obj.hide_render = True
         obj.show_bounds = True
         obj.display_type = "BOUNDS"
-        obj.display_bounds_type = self.shape
-        obj.rigid_body.collision_shape = self.shape
         obj.khr_physics_extra_props.is_trigger = True
-        obj.shirakumo_trial_physics_props.filter = self.filter
-        self.customize_object(obj)
-        
-        if use_enter_edit_mode:
-            bpy.ops.object.mode_set(mode = 'EDIT')
-        bpy.context.preferences.edit.use_enter_edit_mode = use_enter_edit_mode
-        return {'FINISHED'}
-
-class SHIRAKUMO_TRIAL_OT_add_trigger(GenericTrigger):
-    bl_idname = "shirakumo_trial.add_trigger"
-    bl_label = "Trigger"
-    bl_description = "Construct a trigger volume"
-    
-    form: bpy.props.StringProperty(
-        name="Lisp Form",
-        default="",
-        description="The Lisp form to execute on trigger")
-
-    def customize_object(self, obj):
-        obj.shirakumo_trial_physics_props.type = 'TRIGGER'
-        obj.shirakumo_trial_physics_props.form = self.form
-
-    def customize_layout(self, layout):
-        layout.prop(self, 'form', expand=True)
-
-class SHIRAKUMO_TRIAL_OT_add_spawner(GenericTrigger):
-    bl_idname = "shirakumo_trial.add_spawner"
-    bl_label = "Spawner"
-    bl_description = "Construct a spawn volume"
-    
-    spawn: bpy.props.StringProperty(
-        name="Item",
-        default="",
-        description="The item to spawn")
-    spawn_count: bpy.props.IntProperty(
-        name="Count",
-        default=1, min=1,
-        description="The number of items to spawn")
-    auto_deactivate: bpy.props.BoolProperty(
-        name="Auto-Deactivate",
-        default=True,
-        description="Whether to deactivate the trigger after all its items have been removed")
-    respawn_cooldown: bpy.props.FloatProperty(
-        name="Respawn Cooldown",
-        default=0.0, min=0.0, unit='TIME',
-        description="The number of seconds to wait between the last item was removed before respawning")
-
-    def customize_object(self, obj):
-        obj.shirakumo_trial_physics_props.type = 'SPAWNER'
-        obj.shirakumo_trial_physics_props.spawn = self.spawn
-        obj.shirakumo_trial_physics_props.spawn_count = self.spawn_count
-        obj.shirakumo_trial_physics_props.auto_deactivate = self.auto_deactivate
-        obj.shirakumo_trial_physics_props.respawn_cooldown = self.respawn_cooldown
-
-    def customize_layout(self, layout):
-        layout.prop(self, 'auto_deactivate', expand=True)
-        layout.prop(self, 'spawn', expand=True)
-        layout.prop(self, 'spawn_count', expand=True)
-        layout.prop(self, 'respawn_cooldown', expand=True)
-
-class SHIRAKUMO_TRIAL_OT_add_kill_volume(GenericTrigger):
-    bl_idname = "shirakumo_trial.add_kill_volume"
-    bl_label = "Kill Volume"
-    bl_description = "Construct a kill volume"
-    
-    kill_type: bpy.props.StringProperty(
-        name="Type",
-        default="T",
-        description="The type name of things to despawn")
-
-    def customize_object(self, obj):
-        obj.shirakumo_trial_physics_props.type = 'KILLVOLUME'
-        obj.shirakumo_trial_physics_props.kill_type = self.kill_type
-
-    def customize_layout(self, layout):
-        layout.prop(self, 'kill_type', expand=True)
-
-class SHIRAKUMO_TRIAL_OT_add_checkpoint(GenericTrigger):
-    bl_idname = "shirakumo_trial.add_checkpoint"
-    bl_label = "Checkpoint"
-    bl_description = "Construct a checkpoint"
-    
-    def customize_object(self, obj):
-        obj.shirakumo_trial_physics_props.type = 'CHECKPOINT'
-        child = bpy.data.objects.new('Spawnpoint', None)
-        link_to_object_collection(obj, child)
-        child.empty_display_type = 'ARROWS'
-        child.parent = obj
-        child.location = (0,0,0)
-        
-    def customize_layout(self, layout):
-        pass
-
-class SHIRAKUMO_TRIAL_OT_add_progression_trigger(GenericTrigger):
-    bl_idname = "shirakumo_trial.add_progression_trigger"
-    bl_label = "Progression"
-    bl_description = "Construct a progression trigger"
-
-    state: bpy.props.StringProperty(
-        name="State",
-        default="progression",
-        description="The state variable to update")
-    value: bpy.props.FloatProperty(
-        name="Value",
-        default=1.0,
-        description="The value to modify the state by")
-    mode: bpy.props.EnumProperty(
-        name="Mode",
-        items=[
-            ("INC", "+", "", 1),
-            ("DEC", "-", "", 2),
-            ("SET", "=", "", 3),
-        ],
-        default="INC",
-        description="The way to update the state by the value")
-    condition: bpy.props.StringProperty(
-        name="Condition",
-        default="T",
-        description="The condition that must be true for the state update to happen")
-
-    def customize_object(self, obj):
-        obj.shirakumo_trial_physics_props.type = 'PROGRESSION'
-        obj.shirakumo_trial_physics_props.state = self.state
-        obj.shirakumo_trial_physics_props.value = self.value
-        obj.shirakumo_trial_physics_props.mode = self.mode
-        obj.shirakumo_trial_physics_props.condition = self.condition
-
-    def customize_layout(self, layout):
-        layout.prop(self, 'state', expand=True)
-        layout.prop(self, 'value', expand=True)
-        layout.prop(self, 'mode', expand=False)
-        layout.prop(self, 'condition', expand=True)
+        if obj.shirakumo_trial_physics_props.type == 'CHECKPOINT':
+            child = bpy.data.objects.new('Spawnpoint', None)
+            link_to_object_collection(obj, child)
+            child.empty_display_type = 'ARROWS'
+            child.parent = obj
+            child.location = (0,0,0)
+        else:
+            clear_children(obj)
+    else:
+        obj.hide_render = False
+        obj.show_bounds = False
+        obj.khr_physics_extra_props.is_trigger = False
+        match obj.shirakumo_trial_physics_props.type:
+            case 'VIRTUAL':
+                obj.display_type = 'BOUNDS'
+                obj.khr_physics_extra_props.infinite_mass = True
+            case 'ENVIRONMENT':
+                obj.display_type = 'TEXTURED'
+                obj.rigid_body.collision_shape = 'MESH'
+                obj.khr_physics_extra_props.infinite_mass = True
+            case _:
+                obj.display_type = 'TEXTURED'
 
 def camera_type_changed(self, context):
     obj = context.object
     if obj.shirakumo_trial_physics_props.camera_state == 'FIXED':
-        obj.children[0].hide_set(False)
-    else:
-        obj.children[0].hide_set(True)
-
-class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
-    bl_idname = "shirakumo_trial.add_camera_trigger"
-    bl_label = "Camera"
-    bl_description = "Construct a camera trigger"
-    
-    camera_state: bpy.props.EnumProperty(
-        name="State",
-        items=[
-            ("FREE", "Free", "", 1),
-            ("FIXED", "Fixed", "", 2),
-            ("ANIMATED", "Animated", "", 3),
-        ],
-        default="FREE",
-        description="The state to switch the camera into")
-    target: bpy.props.StringProperty(
-        name="Target",
-        default="",
-        description="The target of the camera change")
-
-    def customize_object(self, obj):
-        obj.shirakumo_trial_physics_props.type = 'CAMERA'
-        obj.shirakumo_trial_physics_props.camera_state = self.camera_state
-        obj.shirakumo_trial_physics_props.target = self.target
         pivot = bpy.data.objects.new('CameraPivot', None)
         link_to_object_collection(obj, pivot)
         pivot.empty_display_type = 'CIRCLE'
@@ -250,12 +76,135 @@ class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
         pivot.location[2] += default[0]*cos(default[2])
         pivot.rotation_euler[2] = default[1]
         pivot.scale = [default[0], default[0], default[0]]
+    else:
+        clear_children(obj)
 
-    def customize_layout(self, layout):
-        layout.prop(self, 'camera_state', expand=True)
-        layout.prop(self, 'target', expand=True)
+class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
+    
+    shape: bpy.props.EnumProperty(
+        name="Shape",
+        description="The shape of the trigger volume",
+        items=[
+            ("BOX", "Box", "A box", "MESH_CUBE", 1),
+            ("SPHERE", "Sphere", "A spheroid", "MESH_UVSPHERE", 2),
+            ("CAPSULE", "Capsule", "A pill/capsule", "MESH_CAPSULE", 3),
+            ("CYLINDER", "Cylinder", "A cylinder", "MESH_CYLINDER", 4),
+        ])
+
+    def customize_layout(self, obj, layout):
+        pass
+
+    def customize_object(self, obj, context):
+        pass
+    
+    def draw(self, context):
+        layout = self.layout
+        obj = context.object
+        layout.prop(self, 'shape', expand=False)
+        layout.prop(obj.shirakumo_trial_physics_props, "filter", expand=True)
+        self.customize_layout(obj, layout)
+    
+    def execute(self, context):
+        use_enter_edit_mode = bpy.context.preferences.edit.use_enter_edit_mode
+        bpy.context.preferences.edit.use_enter_edit_mode = False
+
+        bpy.ops.mesh.primitive_cube_add(calc_uvs=False)
+        bpy.ops.rigidbody.objects_add()
+        obj = context.object
+        center_in_view(obj)
+        obj.name = self.bl_label
+        obj.color = (1, 0, 1, 1)
+        obj.display_bounds_type = self.shape
+        obj.rigid_body.collision_shape = self.shape
+        self.customize_object(obj, context)
+        trigger_type_changed(obj, context)
         
+        if use_enter_edit_mode:
+            bpy.ops.object.mode_set(mode = 'EDIT')
+        bpy.context.preferences.edit.use_enter_edit_mode = use_enter_edit_mode
+        return {'FINISHED'}
 
+class SHIRAKUMO_TRIAL_OT_add_trigger(GenericTrigger):
+    bl_idname = "shirakumo_trial.add_trigger"
+    bl_label = "Trigger"
+    bl_description = "Construct a trigger volume"
+    
+    form: bpy.props.StringProperty(
+        name="Lisp Form",
+        default="",
+        description="The Lisp form to execute on trigger")
+
+    def customize_object(self, obj, context):
+        obj.shirakumo_trial_physics_props.type = 'TRIGGER'
+
+    def customize_layout(self, obj, layout):
+        layout.prop(obj.shirakumo_trial_physics_props, 'form', expand=True)
+
+class SHIRAKUMO_TRIAL_OT_add_spawner(GenericTrigger):
+    bl_idname = "shirakumo_trial.add_spawner"
+    bl_label = "Spawner"
+    bl_description = "Construct a spawn volume"
+
+    def customize_object(self, obj, context):
+        obj.shirakumo_trial_physics_props.type = 'SPAWNER'
+
+    def customize_layout(self, obj, layout):
+        layout.prop(obj.shirakumo_trial_physics_props, 'auto_deactivate', expand=True)
+        layout.prop(obj.shirakumo_trial_physics_props, 'snap_to_surface', expand=True)
+        layout.prop(obj.shirakumo_trial_physics_props, 'spawn', expand=True)
+        layout.prop(obj.shirakumo_trial_physics_props, 'spawn_count', expand=True)
+        layout.prop(obj.shirakumo_trial_physics_props, 'respawn_cooldown', expand=True)
+
+class SHIRAKUMO_TRIAL_OT_add_kill_volume(GenericTrigger):
+    bl_idname = "shirakumo_trial.add_kill_volume"
+    bl_label = "Kill Volume"
+    bl_description = "Construct a kill volume"
+
+    def customize_object(self, obj, context):
+        obj.shirakumo_trial_physics_props.type = 'KILLVOLUME'
+
+    def customize_layout(self, obj, layout):
+        layout.prop(obj.shirakumo_trial_physics_props, 'kill_type', expand=True)
+
+class SHIRAKUMO_TRIAL_OT_add_checkpoint(GenericTrigger):
+    bl_idname = "shirakumo_trial.add_checkpoint"
+    bl_label = "Checkpoint"
+    bl_description = "Construct a checkpoint"
+    
+    def customize_object(self, obj, context):
+        obj.shirakumo_trial_physics_props.type = 'CHECKPOINT'
+        
+    def customize_layout(self, obj, layout):
+        pass
+
+class SHIRAKUMO_TRIAL_OT_add_progression_trigger(GenericTrigger):
+    bl_idname = "shirakumo_trial.add_progression_trigger"
+    bl_label = "Progression"
+    bl_description = "Construct a progression trigger"
+
+    def customize_object(self, obj, context):
+        obj.shirakumo_trial_physics_props.type = 'PROGRESSION'
+
+    def customize_layout(self, obj, layout):
+        layout.prop(obj.shirakumo_trial_physics_props, 'state', expand=True)
+        layout.prop(obj.shirakumo_trial_physics_props, 'value', expand=True)
+        layout.prop(obj.shirakumo_trial_physics_props, 'mode', expand=False)
+        layout.prop(obj.shirakumo_trial_physics_props, 'condition', expand=True)
+
+class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
+    bl_idname = "shirakumo_trial.add_camera_trigger"
+    bl_label = "Camera"
+    bl_description = "Construct a camera trigger"
+
+    def customize_object(self, obj, context):
+        obj.shirakumo_trial_physics_props.type = 'CAMERA'
+        camera_type_changed(self, context)
+
+    def customize_layout(self, obj, layout):
+        layout.prop(obj.shirakumo_trial_physics_props, 'camera_state', expand=True)
+        layout.prop(obj.shirakumo_trial_physics_props, 'target', expand=True)
+        
 class SHIRAKUMO_TRIAL_MT_triggers_add(bpy.types.Menu):
     bl_idname = "SHIRAKUMO_TRIAL_MT_triggers_add"
     bl_label = "Triggers"
@@ -278,7 +227,6 @@ def menu_func(self, context):
 
 def trigger_icon(obj):
     props = obj.shirakumo_trial_physics_props
-    if props.type == "NONE": return ""
     if props.type == "TRIGGER":
         return "\uf06a"
     if props.type == "SPAWNER":
@@ -309,18 +257,22 @@ def trigger_icon(obj):
 class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
     type: bpy.props.EnumProperty(
         name="Type",
-        default="NONE", options=set(),
-        description="The type of trigger volume this object is",
         items=[
-            ("NONE", "None", "SEQUENCE", 0),
-            ("TRIGGER", "Trigger", "", 1),
-            ("SPAWNER", "Spawner", "GHOST_ENABLED", 2),
-            ("KILLVOLUME", "Kill Volume", "GHOST_DISABLED", 3),
-            ("CHECKPOINT", "Checkpoint", "CHECKBOX_HLT", 4),
-            ("PROGRESSION", "Progression", "TRACKING_FORWARDS", 5),
-            ("CAMERA", "Camera", "VIEW_CAMERA", 6),
-            ("INTERACTABLE", "Interactable", "VIEWZOOM", 7),
-        ])
+            ("NONE", "None", "No particular behaviour", "", 0),
+            ("TRIGGER", "Trigger", "Generic trigger volume", "SHADERFX", 1),
+            ("SPAWNER", "Spawner", "Spawns new objects", "GHOST_ENABLED", 2),
+            ("KILLVOLUME", "Kill Volume", "Kills entering objects", "GHOST_DISABLED", 3),
+            ("CHECKPOINT", "Checkpoint", "Marks a checkpoint and respawn point", "CHECKBOX_HLT", 4),
+            ("PROGRESSION", "Progression", "Updates a progression value when entered", "TRACKING_FORWARDS", 5),
+            ("CAMERA", "Camera", "Changes the camera mode", "VIEW_CAMERA", 6),
+            ("INTERACTABLE", "Interactable", "An object that can be interacted with", "VIEWZOOM", 7),
+            ("VIRTUAL", "Virtual Collider", "A virtual physics collider", "MOD_PHYSICS", 8),
+            ("PROP", "Prop", "An environmental prop", "OBJECT_DATA", 9),
+            ("ENVIRONMENT", "Environment", "Level environment geometry", "WORLD", 10)
+        ],
+        default="NONE", options=set(),
+        update=trigger_type_changed,
+        description="The type of object this is")
     filter: bpy.props.StringProperty(
         name="Filter",
         default="T", options=set(),
@@ -353,10 +305,6 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         name="Type",
         default="T", options=set(),
         description="The type name of things to despawn")
-    virtual: bpy.props.BoolProperty(
-        name="Virtual",
-        default=False, options=set(),
-        description="If true the object won't be visible, but will be participating in physics interactions")
     instance_of: bpy.props.StringProperty(
         name="Instance Of",
         default="", options=set(),
@@ -372,9 +320,9 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
     mode: bpy.props.EnumProperty(
         name="Mode",
         items=[
-            ("INC", "+", "", 1),
-            ("DEC", "-", "", 2),
-            ("SET", "=", "", 3),
+            ("INC", "+", "Increase", "", 1),
+            ("DEC", "-", "Decrease", "", 2),
+            ("SET", "=", "Set", "", 3),
         ],
         default="INC", options=set(),
         description="The way to update the state by the value")
@@ -385,9 +333,9 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
     camera_state: bpy.props.EnumProperty(
         name="State",
         items=[
-            ("FREE", "Free", "", 1),
-            ("FIXED", "Fixed", "", 2),
-            ("ANIMATED", "Animated", "", 3),
+            ("FREE", "Free", "The camera is in free player control", "FILE_REFRESH", 1),
+            ("FIXED", "Fixed", "The camera is fixed to a particular direction", "FORWARD", 2),
+            ("ANIMATED", "Animated", "The camera is controlled by animation", "RENDER_ANIMATION", 3),
         ],
         default="FREE", options=set(),
         update=camera_type_changed,
@@ -407,10 +355,10 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
     interaction_kind: bpy.props.EnumProperty(
         name="Kind",
         items=[
-            ("PICKUP", "Pickup", "", 1),
-            ("INSPECTABLE", "Inspectable", "", 2),
-            ("USABLE", "Usable", "", 3),
-            ("BUTTON", "Button", "", 4),
+            ("PICKUP", "Pickup", "The item can be picked up", "VIEW_PAN", 1),
+            ("INSPECTABLE", "Inspectable", "The item can be inspected", "VIEW_ZOOM", 2),
+            ("USABLE", "Usable", "The item can be interacted with", "USER", 3),
+            ("BUTTON", "Button", "The item is a button that can be pressed", "STYLUS_PRESSURE", 4),
         ],
         default="INSPECTABLE", options=set(),
         description="The kind of interaction to trigger")
@@ -452,8 +400,7 @@ class SHIRAKUMO_TRIAL_PT_object(SHIRAKUMO_TRIAL_PT_physics_panel_base):
     
     @classmethod
     def poll(cls, context):
-        return (SHIRAKUMO_TRIAL_PT_physics_panel_base.rigid_body_selected(context)
-                and context.object.shirakumo_trial_physics_props.type in ['NONE', 'INTERACTABLE'])
+        return SHIRAKUMO_TRIAL_PT_physics_panel_base.rigid_body_selected(context)
 
     def draw(self, context):
         obj = context.object
@@ -463,58 +410,37 @@ class SHIRAKUMO_TRIAL_PT_object(SHIRAKUMO_TRIAL_PT_physics_panel_base):
             row_major=True, columns=0, even_columns=True, even_rows=False, align=True
         )
 
-        flow.column().prop(obj.shirakumo_trial_physics_props, "virtual")
-        flow.column().prop(obj.shirakumo_trial_physics_props, "instance_of")
-        if obj.shirakumo_trial_physics_props.type == 'INTERACTABLE':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "form")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "interaction")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "interaction_kind")
-
-class SHIRAKUMO_TRIAL_PT_trigger(SHIRAKUMO_TRIAL_PT_physics_panel_base):
-    bl_label = "Trigger Properties"
-    bl_parent_id = "SHIRAKUMO_TRIAL_PT_physics_panel"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "physics"
-    
-    @classmethod
-    def poll(cls, context):
-        return (SHIRAKUMO_TRIAL_PT_physics_panel_base.rigid_body_selected(context)
-                and not context.object.shirakumo_trial_physics_props.type in ['NONE', 'INTERACTABLE'])
-
-    def draw(self, context):
-        obj = context.object
-        layout = self.layout
-        layout.use_property_split = True
-        flow = layout.grid_flow(
-            row_major=True, columns=0, even_columns=True, even_rows=False, align=True
-        )
-
-        flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
-        if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "form")
-        elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "snap_to_surface")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
-        elif obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
-        elif obj.shirakumo_trial_physics_props.type == 'CHECKPOINT':
-            pass
-        elif obj.shirakumo_trial_physics_props.type == 'PROGRESSION':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "state")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "value")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "mode")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "condition")
-        elif obj.shirakumo_trial_physics_props.type == 'CAMERA':
-            flow.column().prop(obj.shirakumo_trial_physics_props, "camera_state")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "target")
-            flow.column().prop(obj.shirakumo_trial_physics_props, "offset")
+        if is_trigger(obj):
+            flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
+            if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "form")
+            elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "snap_to_surface")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
+            elif obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
+            elif obj.shirakumo_trial_physics_props.type == 'CHECKPOINT':
+                pass
+            elif obj.shirakumo_trial_physics_props.type == 'PROGRESSION':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "state")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "value")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "mode")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "condition")
+            elif obj.shirakumo_trial_physics_props.type == 'CAMERA':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "camera_state")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "target")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "offset")
+        else:
+            flow.column().prop(obj.shirakumo_trial_physics_props, "instance_of")
+            if obj.shirakumo_trial_physics_props.type == 'INTERACTABLE':
+                flow.column().prop(obj.shirakumo_trial_physics_props, "form")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "interaction")
+                flow.column().prop(obj.shirakumo_trial_physics_props, "interaction_kind")
 
 class SHIRAKUMO_TRIAL_viewport_render:
-    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.icon_size = 50.0
@@ -563,8 +489,7 @@ registered_classes = [
     SHIRAKUMO_TRIAL_MT_triggers_add,
     SHIRAKUMO_TRIAL_physics_properties,
     SHIRAKUMO_TRIAL_PT_physics_panel,
-    SHIRAKUMO_TRIAL_PT_object,
-    SHIRAKUMO_TRIAL_PT_trigger,
+    SHIRAKUMO_TRIAL_PT_object
 ]
 
 def register():
