@@ -94,7 +94,7 @@ def ensure_ao_material(obj, size=None, resize=True):
 def is_solo_rebake(obj):
     return is_prop(obj) or (obj.rigid_body and not obj.khr_physics_extra_props.infinite_mass)
 
-def rebake_object(obj, resize=True):
+def rebake_object(obj, resize=True, reproject=True):
     print("Rebake "+obj.name)
     
     if is_solo_rebake(obj):
@@ -121,10 +121,11 @@ def rebake_object(obj, resize=True):
         tex.select = True
         mat.node_tree.nodes.active = tex
 
-        bpy.ops.object.mode_set(mode='EDIT')
-        bpy.ops.mesh.select_all(action='SELECT')
-        bpy.ops.uv.smart_project(island_margin=1/size)
-        bpy.ops.object.mode_set(mode='OBJECT')
+        if reproject:
+            bpy.ops.object.mode_set(mode='EDIT')
+            bpy.ops.mesh.select_all(action='SELECT')
+            bpy.ops.uv.smart_project(island_margin=1/size)
+            bpy.ops.object.mode_set(mode='OBJECT')
         bpy.context.scene.render.engine = 'CYCLES'
         bpy.ops.object.bake('INVOKE_DEFAULT', type='AO', uv_layer='AO', use_clear=True)
         ## NOTE: This currently does not do much since Blender's bake runs in the
@@ -132,6 +133,9 @@ def rebake_object(obj, resize=True):
         ##       way to observe when the job is done to restore our settings. Fun.
         ##       we try anyway by hoping 3 seconds is enough lol.
         def restore():
+            if bpy.app.is_job_running('OBJECT_BAKE'):
+                return 0.1
+            print("Restoring pre-bake properties on "+obj.name)
             alpha.default_value = saved_alpha
             obj.data.uv_layers.active_index = saved_uv
             for node in mat.node_tree.nodes:
@@ -140,7 +144,7 @@ def rebake_object(obj, resize=True):
             mat.node_tree.nodes.active = saved_node
             if saved_normal:
                 mat.node_tree.links.new(bsdf.inputs['Normal'], saved_normal.outputs['Color'])
-        bpy.app.timers.register(restore, first_interval=3)
+        bpy.app.timers.register(restore, first_interval=0.1)
 
 def export_single_object(obj=None, path=None):
     if obj is None:
@@ -163,9 +167,30 @@ class SteppedOperator(bpy.types.Operator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.steps = []
-        self.index = -1
+        self.index = 0
         self.timer = None
         self.timer_count = 0
+        self.started = self.begin_started()
+
+    def begin_started(self):
+        return True
+
+    def in_progress(self):
+        return False
+
+    def run_step(self):
+        try:
+            print("Running step {0}/{1}".format(self.index, len(self.steps)))
+            self.steps[self.index]()
+            return True
+        except:
+            import traceback
+            print(traceback.format_exc())
+            context.window_manager.event_timer_remove(self.timer)
+            context.object.shirakumo_operator_progress = -1.0
+            if context.area != None:
+                context.area.tag_redraw()
+            return False
 
     def modal(self, context, event):
         if len(self.steps) <= self.index or len(self.steps) == 0:
@@ -176,23 +201,21 @@ class SteppedOperator(bpy.types.Operator):
             return {'FINISHED'}
 
         if event.type == 'TIMER':
-            self.timer_count += 1
-            if 10 <= self.timer_count and not bpy.app.is_job_running('OBJECT_BAKE'):
-                self.timer_count = 0
-                self.index += 1
-                if self.index < len(self.steps):
-                    try:
-                        self.steps[self.index]()
-                    except:
-                        import traceback
-                        print(traceback.format_exc())
-                        context.window_manager.event_timer_remove(self.timer)
-                        context.object.shirakumo_operator_progress = -1.0
-                        if context.area != None:
-                            context.area.tag_redraw()
-                        return {'CANCELLED'}
+            if self.timer_count == 0 and self.index < len(self.steps):
+                self.timer_count += 1
+                if not self.run_step():
+                    return {'CANCELLED'}
+            elif not self.started and self.in_progress():
+                self.started = True
+            elif self.started and not self.in_progress():
+                # We are done but need to cool off.
+                self.timer_count += 1
+                if 5 <= self.timer_count:
+                    self.index += 1
+                    self.started = self.begin_started()
+                    self.timer_count = 0
         
-        context.object.shirakumo_operator_progress = float(max(0,self.index))/len(self.steps)
+        context.object.shirakumo_operator_progress = float(self.index)/len(self.steps)
         if context.area != None:
             context.area.tag_redraw()
         return {'RUNNING_MODAL'}
@@ -213,14 +236,21 @@ class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
     @classmethod
     def poll(cls, context):
         return context.object.shirakumo_operator_progress < 0
+
+    def begin_started(self):
+        return False
+
+    def in_progress(self):
+        return bpy.app.is_job_running('OBJECT_BAKE')
     
     def prepare(self, context, event):
         objects = context.selected_objects
         if len(objects) == 0:
             objects = bpy.data.objects
-        for obj in unique_meshes(objects):
+        objects = unique_meshes(objects)
+        for obj in objects:
             if is_bakable_object(obj):
-                self.steps.append(lambda o=obj : rebake_object(o))
+                self.steps.append(lambda o=obj : rebake_object(o, reproject=(1 == len(objects))))
 
 class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     bl_idname = "shirakumo_trial.reexport"
@@ -292,6 +322,11 @@ class SHIRAKUMO_TRIAL_OT_make_prop(bpy.types.Operator):
             objects = bpy.data.objects
         objects = [ x for x in objects if x.type == 'MESH' ]
         push_selection(objects)
+        bpy.ops.object.modifier_add_node_group(asset_library_identifier="User Library",
+                                               relative_asset_identifier="uvFactory 4.3 v1/uvFactory_4_3_v1.blend/NodeTree/UV Island Project",
+                                               use_selected_objects=True)
+        bpy.ops.object.modifier_apply(modifier="UV Island Project",
+                                      use_selected_objects=True)
         for obj in objects:
             ensure_physics_object(obj, type='PROP')
             obj.rigid_body.use_start_deactivated = True
@@ -341,11 +376,12 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
         if not hasattr(obj, 'shirakumo_operator_progress'):
             pass
         elif 0 <= obj.shirakumo_operator_progress:
-            layout.column().progress(text="Working..." , factor=obj.shirakumo_operator_progress)
+            layout.column().progress(text="Working ({0}%)".format(obj.shirakumo_operator_progress*100),
+                                     factor=obj.shirakumo_operator_progress)
         else:
             layout.column().prop(context.scene.shirakumo_trial_file_properties, "ao_map_resolution")
             if 0 < len(context.selected_objects):
-                layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for Selected")
+                layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for {0}".format(len(context.selected_objects)))
                 if not is_environment(obj) and not is_prop(obj):
                     layout.column().operator("shirakumo_trial.make_environment", text="Make Environment")
                     layout.column().operator("shirakumo_trial.make_prop", text="Make Prop")
