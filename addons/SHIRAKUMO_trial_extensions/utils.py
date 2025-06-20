@@ -1,4 +1,5 @@
 import bpy
+from pathlib import Path
 
 def message_box(message="", title="Trial", icon='INFO'):
     def draw(self, context):
@@ -81,3 +82,26 @@ def ensure_physics_object(obj, type='NONE'):
         with Selection([obj]) as sel:
             bpy.ops.rigidbody.objects_add()
     obj.shirakumo_trial_physics_props.type = type
+
+def find_asset(name, kind, library=None):
+    if library is None:
+        for library in bpy.context.preferences.filepaths.asset_libraries:
+            asset = find_asset(name, kind, library)
+            if asset is not None:
+                return asset
+    elif isinstance(library, bpy.types.UserAssetLibrary):
+        library_name = library.name
+        library_path = Path(library.path)
+        for blend_file in library_path.glob("**/*.blend"):
+            if blend_file.is_file():
+                asset = find_asset(name, kind, blend_file)
+                if asset is not None:
+                    return asset
+    elif isinstance(library, Path):
+        with bpy.data.libraries.load(str(library), assets_only=True) as (data_from, data_to):
+            setattr(data_to, kind, [n for n in getattr(data_from, kind) if n == name])
+        for obj in getattr(data_to, kind):
+            return obj
+    else:
+        raise Exception("Unknown library type: "+str(type(library)))
+    return None
