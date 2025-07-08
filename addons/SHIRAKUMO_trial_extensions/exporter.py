@@ -108,8 +108,9 @@ class glTF2ExportUserExtension:
                                        ("spawnCount", props.spawn_count, 1),
                                        ("autoDeactivate", props.auto_deactivate, True),
                                        ("snapToSurface", props.snap_to_surface, True),
-                                       ("rotation", [props.min_rotation, props.max_rotation],
-                                        [(0.0,0.0,0.0),(0.0,2*pi,0.0)]),
+                                       ("rotation", [[props.min_rotation[0],props.min_rotation[1],props.min_rotation[2]],
+                                                     [props.max_rotation[0],props.max_rotation[1],props.max_rotation[2]]],
+                                        [[0.0,0.0,0.0],[0.0,2*pi,0.0]]),
                                        ("respawnCooldown", props.respawn_cooldown, 0.0))))
             elif props.type == "KILLVOLUME":
                 self.add_extension(gltf2_node,
