@@ -34,6 +34,7 @@ On object nodes set as physics objects the fields are:
   - ``autoDeactivate`` Whether the trigger should deactivate after all spawned objects were removed
   - ``snapToSurface`` Whether spawned objects should be snapped down to the level surface on spawn
   - ``respawnCooldown`` How much time to wait to respawn a removed object
+  - ``rotation`` A list of two euler angle triplets, designating the minimum and maximum rotation angles when spawning.
 - ``killvolume``
   - ``kill`` A Lisp type expression to match which objects to remove when entering the trigger volume
 - ``checkpoint``

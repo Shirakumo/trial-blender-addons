@@ -2,7 +2,7 @@ import bpy
 import blf
 import os
 from bpy_extras import object_utils,view3d_utils
-from math import radians,cos
+from math import radians,cos,pi
 from .utils import *
 
 def link_to_object_collection(obj, new):
@@ -152,6 +152,8 @@ class SHIRAKUMO_TRIAL_OT_add_spawner(GenericTrigger):
     def customize_layout(self, obj, layout):
         layout.prop(obj.shirakumo_trial_physics_props, 'auto_deactivate', expand=True)
         layout.prop(obj.shirakumo_trial_physics_props, 'snap_to_surface', expand=True)
+        layout.prop(obj.shirakumo_trial_physics_props, 'min_rotation', expand=True)
+        layout.prop(obj.shirakumo_trial_physics_props, 'max_rotation', expand=True)
         layout.prop(obj.shirakumo_trial_physics_props, 'spawn', expand=True)
         layout.prop(obj.shirakumo_trial_physics_props, 'spawn_count', expand=True)
         layout.prop(obj.shirakumo_trial_physics_props, 'respawn_cooldown', expand=True)
@@ -301,6 +303,18 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         name="Snap to Surface",
         default=True, options=set(),
         description="Whether to snap spawned entities down to the nearest surface on spawn")
+    min_rotation: bpy.props.FloatVectorProperty(
+        name="Min Rotation",
+        subtype="EULER", unit="ROTATION",
+        default=(0.0,0.0,0.0), options=set(),
+        min=0.0, max=2*pi,
+        description="Minimum of rotation range on spawn")
+    max_rotation: bpy.props.FloatVectorProperty(
+        name="Max Rotation",
+        subtype="EULER", unit="ROTATION",
+        default=(0.0,2*pi,0.0), options=set(),
+        min=0.0, max=2*pi,
+        description="Maximum of rotation range on spawn")
     kill_type: bpy.props.StringProperty(
         name="Type",
         default="T", options=set(),
@@ -417,6 +431,9 @@ class SHIRAKUMO_TRIAL_PT_object(SHIRAKUMO_TRIAL_PT_physics_panel_base):
             elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
                 flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "snap_to_surface")
+                cf = flow.grid_flow(columns=2)
+                cf.prop(obj.shirakumo_trial_physics_props, "min_rotation")
+                cf.prop(obj.shirakumo_trial_physics_props, "max_rotation")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
