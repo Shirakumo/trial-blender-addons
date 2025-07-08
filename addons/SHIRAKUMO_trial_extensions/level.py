@@ -248,9 +248,10 @@ class SHIRAKUMO_TRIAL_OT_rebake(SteppedOperator):
         if len(objects) == 0:
             objects = bpy.data.objects
         objects = unique_meshes(objects)
+        reproject_uvs = context.scene.shirakumo_trial_file_properties.reproject_uvs and (1 == len(objects))
         for obj in objects:
             if is_bakable_object(obj):
-                self.steps.append(lambda o=obj : rebake_object(o, reproject=(1 == len(objects))))
+                self.steps.append(lambda o=obj : rebake_object(o, reproject=reproject_uvs))
 
 class SHIRAKUMO_TRIAL_OT_reexport(SteppedOperator):
     bl_idname = "shirakumo_trial.reexport"
@@ -381,7 +382,9 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
         else:
             layout.column().prop(context.scene.shirakumo_trial_file_properties, "ao_map_resolution")
             if 0 < len(context.selected_objects):
-                layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for {0}".format(len(context.selected_objects)))
+                cf = layout.split(factor=0.3)
+                cf.prop(context.scene.shirakumo_trial_file_properties, "reproject_uvs")
+                cf.operator("shirakumo_trial.rebake", text="ReBake AO for {0}".format(len(context.selected_objects)))
                 if not is_environment(obj) and not is_prop(obj):
                     layout.column().operator("shirakumo_trial.make_environment", text="Make Environment")
                     layout.column().operator("shirakumo_trial.make_prop", text="Make Prop")
@@ -400,6 +403,10 @@ class SHIRAKUMO_TRIAL_file_properties(bpy.types.PropertyGroup):
         name="AO Map Resolution",
         default=16, min=1, soft_max=256, subtype='FACTOR', options=set(),
         description="The resolution scaling for ambient occlusion maps")
+    reproject_uvs: bpy.props.BoolProperty(
+        name="ReUV",
+        default=True, options=set(),
+        description="Whether to recompute the UV map when baking.")
     export_path: bpy.props.StringProperty(
         name="Export Path",
         default="", subtype='FILE_PATH', options=set(),
