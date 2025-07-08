@@ -1,7 +1,7 @@
 import bpy
 import os
 import logging
-from math import atan2
+from math import atan2,pi
 from io_scene_gltf2.io.com import gltf2_io
 
 logger = logging.getLogger('glTFImporter')
@@ -108,6 +108,8 @@ class glTF2ExportUserExtension:
                                        ("spawnCount", props.spawn_count, 1),
                                        ("autoDeactivate", props.auto_deactivate, True),
                                        ("snapToSurface", props.snap_to_surface, True),
+                                       ("rotation", [props.min_rotation, props.max_rotation],
+                                        [(0.0,0.0,0.0),(0.0,2*pi,0.0)]),
                                        ("respawnCooldown", props.respawn_cooldown, 0.0))))
             elif props.type == "KILLVOLUME":
                 self.add_extension(gltf2_node,
