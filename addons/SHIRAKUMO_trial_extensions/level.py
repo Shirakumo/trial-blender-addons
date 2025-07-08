@@ -61,7 +61,7 @@ def ensure_base_material(obj, force=True):
         set()
     elif force and not is_base_material(obj.data.materials[0]):
         set()
-    if obj.data.uv_layers.get("UVMap") is None:
+    if len(obj.data.uv_layers) == 0:
         obj.data.uv_layers.new(name='UVMap')
     if obj.data.uv_layers.get("AO") is None:
         obj.data.uv_layers.new(name='AO')
@@ -376,7 +376,7 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
         if not hasattr(obj, 'shirakumo_operator_progress'):
             pass
         elif 0 <= obj.shirakumo_operator_progress:
-            layout.column().progress(text="Working ({0}%)".format(obj.shirakumo_operator_progress*100),
+            layout.column().progress(text="Working ({:.1f}%)".format(obj.shirakumo_operator_progress*100),
                                      factor=obj.shirakumo_operator_progress)
         else:
             layout.column().prop(context.scene.shirakumo_trial_file_properties, "ao_map_resolution")
