@@ -3,6 +3,7 @@ import os
 import logging
 from math import atan2,pi
 from io_scene_gltf2.io.com import gltf2_io
+from .utils import message_box
 
 logger = logging.getLogger('glTFImporter')
 
@@ -42,6 +43,10 @@ class glTF2ExportUserExtension:
         bpy.context.scene.shirakumo_trial_file_properties.export_path = bpy.path.relpath(export_settings['gltf_filepath'])
         if not self.properties.enabled:
             return
+        
+        if (bpy.app.version[0] == 4 and bpy.app.version[1] == 4):
+            message_box("Cannot export animations properly on Blender 4.4! Please use 4.3 or a later version.", icon='WARNING_LARGE')
+
         bg = blender_object.world.node_tree.nodes['Background']
         if bg and bg.inputs and bg.inputs[0].links:
             int = bg.inputs[1].default_value
@@ -173,24 +178,22 @@ class glTF2ExportUserExtension:
             data["values"].append(float(fcurve.keyframe_points[-1].co[1]))
         return data
 
-    def gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings):
-        if not self.properties.enabled:
-            return
-        ## KLUDGE: Ideally we shouldn't do it like this and instead use the proper
-        ##         glTF animations channels, but I have no idea how to hook into that
-        ##         so....
+    def export_action(self, gltf2_animation, blender_action):
         extra_tracks = {}
+        effects = []
         base = "data.shirakumo_trial_extra_props."
         fcurves = []
         if hasattr(blender_action, 'layers'):
             fcurves = blender_action.layers[0].strips[0].channelbag(blender_action.slots[0]).fcurves
         else:
             fcurves = blender_action.fcurves
+        ## KLUDGE: Ideally we shouldn't do it like this and instead use the proper
+        ##         glTF animations channels, but I have no idea how to hook into that
+        ##         so....
         for fcurve in fcurves:
             if fcurve.data_path.startswith(base):
                 name = fcurve.data_path[len(base):]
                 extra_tracks[name] = self.encode_fcurve(fcurve, blender_action.frame_range)
-        effects = []
         for marker in blender_action.pose_markers:
             if marker.name.startswith("["):
                 name = marker.name[1:].strip()
@@ -225,6 +228,17 @@ class glTF2ExportUserExtension:
                                ("blendDuration", props.blend_duration, 0.2),
                                ("extraTracks", extra_tracks),
                                ("effects", effects, []))
+
+    def animation_action_hook(self, gltf2_animation, blender_object, blender_action_data, export_settings):
+        if not self.properties.enabled:
+            return
+        self.export_action(gltf2_animation, blender_action_data.action)
+
+    def gather_animation_hook(self, gltf2_animation, blender_action, blender_object, export_settings):
+        if not self.properties.enabled:
+            return
+        self.export_action(gltf2_animation, blender_action)
+
 
 def draw_export(context, layout):
     header, body = layout.panel("Shirakumo Trial Extensions", default_closed=False)
