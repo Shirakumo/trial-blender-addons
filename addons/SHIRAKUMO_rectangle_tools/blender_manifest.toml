@@ -1,13 +1,12 @@
-schema_version = "0.1.0"
+schema_version = "1.0.0"
 id = "SHIRAKUMO_rectangle_tools"
 name = "Rectangle Tools"
 version = "0.0.1"
 tagline = "Tools to more easily draw rectangles in edit mode"
 maintainer = "Yukari Hafner"
 type = "add-on"
-permissions = []
 tags = []
 blender_version_min = "4.2.0"
-license = ["SPDX:zlib"]
+license = ["SPDX:GPL-3.0-or-later","SPDX:Zlib"]
 website = "https://github.com/Shirakumo/blender-addons/"
 copyright = ["Yukari Hafner"]

@@ -6,7 +6,7 @@ from . import exporter
 from . import importer
 
 bl_info = {
-    "name": "SHIRAKUMO_trial_extensions",
+    "name": "Shirakumo Trial Extensions",
     "version": (0, 0, 1),
     "blender": (4, 0, 0),
     "isDraft": True,
