@@ -1,13 +1,16 @@
-schema_version = "0.1.0"
+schema_version = "1.0.0"
 id = "SHIRAKUMO_trial_extensions"
 name = "Shirakumo Trial Extensions"
 version = "0.0.1"
 tagline = "Editor extensions for extra features supported by the Trial game engine."
 maintainer = "Yukari Hafner"
 type = "add-on"
-permissions = ["files"]
 tags = ["Import-Export"]
 blender_version_min = "4.2.0"
-license = ["SPDX:zlib"]
+license = ["SPDX:GPL-3.0-or-later","SPDX:Zlib"]
 website = "https://github.com/Shirakumo/blender-addons/"
 copyright = ["Yukari Hafner"]
+
+[permissions]
+files = "Import/export SF3 from/to disk"
+
