@@ -323,11 +323,14 @@ class SHIRAKUMO_TRIAL_OT_make_prop(bpy.types.Operator):
             objects = bpy.data.objects
         objects = [ x for x in objects if x.type == 'MESH' ]
         push_selection(objects)
-        bpy.ops.object.modifier_add_node_group(asset_library_identifier="User Library",
-                                               relative_asset_identifier="uvFactory 4.3 v1/uvFactory_4_3_v1.blend/NodeTree/UV Island Project",
-                                               use_selected_objects=True)
-        bpy.ops.object.modifier_apply(modifier="UV Island Project",
-                                      use_selected_objects=True)
+        try:
+            bpy.ops.object.modifier_add_node_group(asset_library_identifier="User Library",
+                                                   relative_asset_identifier="uvFactory 4.3 v1/uvFactory_4_3_v1.blend/NodeTree/UV Island Project",
+                                                   use_selected_objects=True)
+            bpy.ops.object.modifier_apply(modifier="UV Island Project",
+                                          use_selected_objects=True)
+        except:
+            message_box("Failed to apply UV Island Project.")
         for obj in objects:
             ensure_physics_object(obj, type='PROP')
             obj.rigid_body.use_start_deactivated = True
