@@ -62,18 +62,24 @@ def clear_children(obj):
         bpy.data.objects.remove(child, do_unlink=True)
     return obj
 
+def is_physics(obj):
+    return (obj and
+            hasattr(obj, 'rigid_body') and
+            hasattr(obj, 'shirakumo_trial_physics_props') and
+            obj.rigid_body)
+
 def is_trigger(obj):
-    return (obj.shirakumo_trial_physics_props and
+    return (is_physics(obj) and
             obj.shirakumo_trial_physics_props.type in
             ["TRIGGER", "SPAWNER", "KILLVOLUME", "CHECKPOINT", "PROGRESSION", "CAMERA"])
 
 def is_environment(obj):
-    return (obj.shirakumo_trial_physics_props and
+    return (is_physics(obj) and
             obj.shirakumo_trial_physics_props.type in
             ["ENVIRONMENT"])
 
 def is_prop(obj):
-    return (obj.shirakumo_trial_physics_props and
+    return (is_physics(obj) and
             obj.shirakumo_trial_physics_props.type in
             ["PROP"])
 

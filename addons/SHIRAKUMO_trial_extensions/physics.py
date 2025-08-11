@@ -378,23 +378,7 @@ class SHIRAKUMO_TRIAL_physics_properties(bpy.types.PropertyGroup):
         description="The kind of interaction to trigger")
 
 class SHIRAKUMO_TRIAL_PT_physics_panel_base(bpy.types.Panel):
-    bl_label = "Trial Extensions"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "physics"
-
-    @classmethod
-    def rigid_body_selected(cls, context):
-        if context.object and context.object.rigid_body:
-            return True
-        return None
-
-class SHIRAKUMO_TRIAL_PT_physics_panel(SHIRAKUMO_TRIAL_PT_physics_panel_base):
-    bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
-
-    @classmethod
-    def poll(cls, context):
-        return SHIRAKUMO_TRIAL_PT_physics_panel_base.rigid_body_selected(context)
+    bl_label = "Trial Physics Properties"
 
     def draw(self, context):
         obj = context.object
@@ -405,57 +389,59 @@ class SHIRAKUMO_TRIAL_PT_physics_panel(SHIRAKUMO_TRIAL_PT_physics_panel_base):
         )
         flow.column().prop(obj.shirakumo_trial_physics_props, "type")
 
-class SHIRAKUMO_TRIAL_PT_object(SHIRAKUMO_TRIAL_PT_physics_panel_base):
-    bl_label = "Object Properties"
-    bl_parent_id = "SHIRAKUMO_TRIAL_PT_physics_panel"
-    bl_space_type = "PROPERTIES"
-    bl_region_type = "WINDOW"
-    bl_context = "physics"
-    
-    @classmethod
-    def poll(cls, context):
-        return SHIRAKUMO_TRIAL_PT_physics_panel_base.rigid_body_selected(context)
-
-    def draw(self, context):
-        obj = context.object
-        layout = self.layout
-        layout.use_property_split = True
-        flow = layout.grid_flow(
-            row_major=True, columns=0, even_columns=True, even_rows=False, align=True
-        )
-
         if is_trigger(obj):
             flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
-            if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "form")
-            elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "snap_to_surface")
-                cf = flow.grid_flow(columns=2)
-                cf.prop(obj.shirakumo_trial_physics_props, "min_rotation")
-                cf.prop(obj.shirakumo_trial_physics_props, "max_rotation")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
-            elif obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
-            elif obj.shirakumo_trial_physics_props.type == 'CHECKPOINT':
-                pass
-            elif obj.shirakumo_trial_physics_props.type == 'PROGRESSION':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "state")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "value")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "mode")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "condition")
-            elif obj.shirakumo_trial_physics_props.type == 'CAMERA':
-                flow.column().prop(obj.shirakumo_trial_physics_props, "camera_state")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "target")
-                flow.column().prop(obj.shirakumo_trial_physics_props, "offset")
+        if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "form")
+        elif obj.shirakumo_trial_physics_props.type == 'SPAWNER':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "auto_deactivate")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "snap_to_surface")
+            cf = flow.grid_flow(columns=2)
+            cf.prop(obj.shirakumo_trial_physics_props, "min_rotation")
+            cf.prop(obj.shirakumo_trial_physics_props, "max_rotation")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "spawn_count")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "respawn_cooldown")
+        elif obj.shirakumo_trial_physics_props.type == 'KILLVOLUME':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "kill_type")
+        elif obj.shirakumo_trial_physics_props.type == 'CHECKPOINT':
+            pass
+        elif obj.shirakumo_trial_physics_props.type == 'PROGRESSION':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "state")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "value")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "mode")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "condition")
+        elif obj.shirakumo_trial_physics_props.type == 'CAMERA':
+            flow.column().prop(obj.shirakumo_trial_physics_props, "camera_state")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "target")
+            flow.column().prop(obj.shirakumo_trial_physics_props, "offset")
         else:
             flow.column().prop(obj.shirakumo_trial_physics_props, "instance_of")
             if obj.shirakumo_trial_physics_props.type == 'INTERACTABLE':
                 flow.column().prop(obj.shirakumo_trial_physics_props, "form")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "interaction")
                 flow.column().prop(obj.shirakumo_trial_physics_props, "interaction_kind")
+
+class SHIRAKUMO_TRIAL_PT_physics_panel(SHIRAKUMO_TRIAL_PT_physics_panel_base):
+    bl_idname = "SHIRAKUMO_TRIAL_PT_physics_panel"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "physics"
+
+    @classmethod
+    def poll(cls, context):
+        return is_physics(context.object)
+
+class SHIRAKUMO_TRIAL_PT_edit_object(SHIRAKUMO_TRIAL_PT_physics_panel_base):
+    bl_idname = "SHIRAKUMO_TRIAL_PT_edit_object"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "Item"
+    bl_context = "objectmode"
+    
+    @classmethod
+    def poll(cls, context):
+        return is_physics(context.object)
 
 class SHIRAKUMO_TRIAL_viewport_render:
     def __init__(self, *args, **kwargs):
@@ -506,7 +492,7 @@ registered_classes = [
     SHIRAKUMO_TRIAL_MT_triggers_add,
     SHIRAKUMO_TRIAL_physics_properties,
     SHIRAKUMO_TRIAL_PT_physics_panel,
-    SHIRAKUMO_TRIAL_PT_object
+    SHIRAKUMO_TRIAL_PT_edit_object
 ]
 
 def register():
