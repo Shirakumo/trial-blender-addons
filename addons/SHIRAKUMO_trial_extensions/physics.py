@@ -65,10 +65,33 @@ def camera_type_changed(self, context):
     else:
         clear_children(obj)
 
+class SHIRAKUMO_TRIAL_OT_make_trigger_volume(bpy.types.Operator):
+    bl_idname = "shirakumo_trial.make_trigger_volume"
+    bl_label = "Make Trigger Volume"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = "Add a distinct activation volume to the Trigger object"
+
+    def execute(self, context):
+        obj = context.object
+
+        bpy.ops.mesh.primitive_cube_add(calc_uvs=False)
+        bpy.ops.rigidbody.objects_add()
+        trigger = context.object
+        trigger.parent = obj
+        trigger.location = (0,0,0)
+        trigger.name = 'trigger'
+        trigger.color = (0,0,1,1)
+        trigger.hide_render = True
+        trigger.show_bounds = True
+        trigger.display_type = 'BOUNDS'
+        trigger.display_bounds_type = 'BOX'
+        trigger.rigid_body.collision_shape = 'BOX'
+        return {'FINISHED'}
+
 class SHIRAKUMO_TRIAL_OT_add_cube(bpy.types.Operator, object_utils.AddObjectHelper):
-    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     bl_idname = "shirakumo_trial.add_cube"
     bl_label = "Cube"
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     bl_description = "Construct a cube"
 
     pos: None
@@ -401,8 +424,11 @@ class SHIRAKUMO_TRIAL_PT_physics_panel_base(bpy.types.Panel):
         flow = layout.grid_flow(
             row_major=True, columns=0, even_columns=True, even_rows=False, align=True
         )
-        flow.column().prop(obj.shirakumo_trial_physics_props, "type")
 
+        if len(obj.children) == 0 and is_trigger(obj):
+            flow.column().operator("shirakumo_trial.make_trigger_volume", text="Create Activation Volume")
+        
+        flow.column().prop(obj.shirakumo_trial_physics_props, "type")
         if is_trigger(obj):
             flow.column().prop(obj.shirakumo_trial_physics_props, "filter")
         if obj.shirakumo_trial_physics_props.type == 'TRIGGER':
@@ -497,6 +523,8 @@ class SHIRAKUMO_TRIAL_viewport_render:
 viewport_render = SHIRAKUMO_TRIAL_viewport_render()
 
 registered_classes = [
+    SHIRAKUMO_TRIAL_physics_properties,
+    SHIRAKUMO_TRIAL_OT_make_trigger_volume,
     SHIRAKUMO_TRIAL_OT_add_cube,
     SHIRAKUMO_TRIAL_OT_add_trigger,
     SHIRAKUMO_TRIAL_OT_add_spawner,
@@ -505,7 +533,6 @@ registered_classes = [
     SHIRAKUMO_TRIAL_OT_add_progression_trigger,
     SHIRAKUMO_TRIAL_OT_add_camera_trigger,
     SHIRAKUMO_TRIAL_MT_trial_add,
-    SHIRAKUMO_TRIAL_physics_properties,
     SHIRAKUMO_TRIAL_PT_physics_panel,
     SHIRAKUMO_TRIAL_PT_edit_object
 ]
