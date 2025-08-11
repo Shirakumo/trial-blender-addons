@@ -10,20 +10,6 @@ def link_to_object_collection(obj, new):
         if collection.name != 'RigidBodyWorld':
             collection.objects.link(new)
 
-def center_in_view(obj):
-    region = bpy.context.region
-    middle = [region.width / 2.0, region.height / 2.0]
-    center = view3d_utils.region_2d_to_origin_3d(region, bpy.context.space_data.region_3d, middle)
-    forward = view3d_utils.region_2d_to_vector_3d(region, bpy.context.space_data.region_3d, middle)
-
-    hit, loc, normal, *_ = bpy.context.scene.ray_cast(bpy.context.view_layer.depsgraph, center, forward)
-    while hit:
-        center = loc + forward
-        if normal @ forward < 0.0:
-            break
-        hit, loc, normal, *_ = bpy.context.scene.ray_cast(bpy.context.view_layer.depsgraph, center, forward)
-    obj.location = center
-
 def trigger_type_changed(self, context):
     obj = context.object
     if is_trigger(obj):
@@ -79,6 +65,28 @@ def camera_type_changed(self, context):
     else:
         clear_children(obj)
 
+class SHIRAKUMO_TRIAL_OT_add_cube(bpy.types.Operator, object_utils.AddObjectHelper):
+    bl_options = {'REGISTER', 'UNDO', 'PRESET'}
+    bl_idname = "shirakumo_trial.add_cube"
+    bl_label = "Cube"
+    bl_description = "Construct a cube"
+
+    pos: None
+    def invoke(self, context, event):
+        self.pos = [event.mouse_x, event.mouse_y]
+        return self.execute(context)
+    
+    def execute(self, context):
+        use_enter_edit_mode = bpy.context.preferences.edit.use_enter_edit_mode
+        bpy.context.preferences.edit.use_enter_edit_mode = False
+        bpy.ops.mesh.primitive_cube_add(calc_uvs=False)
+        obj = context.object
+        center_in_view(obj, context, self.pos)
+        if use_enter_edit_mode:
+            bpy.ops.object.mode_set(mode = 'EDIT')
+            bpy.context.preferences.edit.use_enter_edit_mode = use_enter_edit_mode
+        return {'FINISHED'}
+
 class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
     bl_options = {'REGISTER', 'UNDO', 'PRESET'}
     
@@ -91,12 +99,17 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
             ("CAPSULE", "Capsule", "A pill/capsule", "MESH_CAPSULE", 3),
             ("CYLINDER", "Cylinder", "A cylinder", "MESH_CYLINDER", 4),
         ])
+    pos: None
 
     def customize_layout(self, obj, layout):
         pass
 
     def customize_object(self, obj, context):
         pass
+    
+    def invoke(self, context, event):
+        self.pos = [event.mouse_x, event.mouse_y]
+        return self.execute(context)
     
     def draw(self, context):
         layout = self.layout
@@ -112,7 +125,7 @@ class GenericTrigger(bpy.types.Operator, object_utils.AddObjectHelper):
         bpy.ops.mesh.primitive_cube_add(calc_uvs=False)
         bpy.ops.rigidbody.objects_add()
         obj = context.object
-        center_in_view(obj)
+        center_in_view(obj, context, self.pos)
         obj.name = self.bl_label
         obj.color = (1, 0, 1, 1)
         obj.display_bounds_type = self.shape
@@ -207,13 +220,14 @@ class SHIRAKUMO_TRIAL_OT_add_camera_trigger(GenericTrigger):
         layout.prop(obj.shirakumo_trial_physics_props, 'camera_state', expand=True)
         layout.prop(obj.shirakumo_trial_physics_props, 'target', expand=True)
         
-class SHIRAKUMO_TRIAL_MT_triggers_add(bpy.types.Menu):
-    bl_idname = "SHIRAKUMO_TRIAL_MT_triggers_add"
-    bl_label = "Triggers"
+class SHIRAKUMO_TRIAL_MT_trial_add(bpy.types.Menu):
+    bl_idname = "SHIRAKUMO_TRIAL_MT_trial_add"
+    bl_label = "Trial Objects"
 
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
+        layout.operator("shirakumo_trial.add_cube", text="Box", icon="CUBE")
         layout.operator("shirakumo_trial.add_trigger", text="Trigger", icon="SEQUENCE")
         layout.operator("shirakumo_trial.add_spawner", text="Spawner", icon="GHOST_ENABLED")
         layout.operator("shirakumo_trial.add_kill_volume", text="Kill Volume", icon="GHOST_DISABLED")
@@ -225,7 +239,7 @@ def menu_func(self, context):
     layout = self.layout
     layout.operator_context = 'INVOKE_REGION_WIN'
     layout.separator()
-    layout.menu("SHIRAKUMO_TRIAL_MT_triggers_add", text="Triggers", icon="DECORATE")
+    layout.menu("SHIRAKUMO_TRIAL_MT_trial_add", text="Trial", icon="DECORATE")
 
 def trigger_icon(obj):
     props = obj.shirakumo_trial_physics_props
@@ -483,13 +497,14 @@ class SHIRAKUMO_TRIAL_viewport_render:
 viewport_render = SHIRAKUMO_TRIAL_viewport_render()
 
 registered_classes = [
+    SHIRAKUMO_TRIAL_OT_add_cube,
     SHIRAKUMO_TRIAL_OT_add_trigger,
     SHIRAKUMO_TRIAL_OT_add_spawner,
     SHIRAKUMO_TRIAL_OT_add_kill_volume,
     SHIRAKUMO_TRIAL_OT_add_checkpoint,
     SHIRAKUMO_TRIAL_OT_add_progression_trigger,
     SHIRAKUMO_TRIAL_OT_add_camera_trigger,
-    SHIRAKUMO_TRIAL_MT_triggers_add,
+    SHIRAKUMO_TRIAL_MT_trial_add,
     SHIRAKUMO_TRIAL_physics_properties,
     SHIRAKUMO_TRIAL_PT_physics_panel,
     SHIRAKUMO_TRIAL_PT_edit_object

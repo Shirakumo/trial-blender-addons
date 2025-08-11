@@ -1,5 +1,7 @@
 import bpy
+from bpy_extras import object_utils,view3d_utils
 from pathlib import Path
+from mathutils import Vector,Matrix
 
 def message_box(message="", title="Trial", icon='INFO'):
     def draw(self, context):
@@ -111,3 +113,35 @@ def find_asset(name, kind, library=None):
     else:
         raise Exception("Unknown library type: "+str(type(library)))
     return None
+
+def snap_to_grid(p, grid=0.1, basis=Matrix.Identity(4)):
+    if grid == 0.0:
+        return p
+    p = basis.inverted_safe() @ p
+    r = [*p]
+    for i in range(len(r)):
+        r[i] = round((r[i])/grid)*grid
+    return basis @ Vector(r)
+
+def center_in_view(obj=None, context=bpy.context, middle=None):
+    region = context.region
+    if obj is None:
+        obj = context.object
+    if middle is None:
+        middle = [region.width / 2.0, region.height / 2.0]
+    center = view3d_utils.region_2d_to_origin_3d(region, context.space_data.region_3d, middle)
+    forward = view3d_utils.region_2d_to_vector_3d(region, context.space_data.region_3d, middle)
+    forward.normalize()
+
+    hit, loc, normal, *_ = context.scene.ray_cast(context.view_layer.depsgraph, center, forward)
+    if not hit:
+        loc = view3d_utils.region_2d_to_location_3d(region, context.space_data.region_3d, middle, Vector())
+    while hit:
+        if normal @ forward < 0.0:
+            break
+        center = loc + forward
+        hit, loc, normal, *_ = context.scene.ray_cast(context.view_layer.depsgraph, center, forward)
+    center = loc - Vector([forward[0] * obj.dimensions[0] * 0.5,
+                           forward[1] * obj.dimensions[1] * 0.5,
+                           forward[2] * obj.dimensions[2] * 0.5])
+    obj.location = snap_to_grid(center)
