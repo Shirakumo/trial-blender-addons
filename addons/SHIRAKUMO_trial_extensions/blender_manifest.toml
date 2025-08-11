@@ -8,7 +8,7 @@ type = "add-on"
 tags = ["Import-Export"]
 blender_version_min = "4.2.0"
 license = ["SPDX:GPL-3.0-or-later","SPDX:Zlib"]
-website = "https://github.com/Shirakumo/blender-addons/"
+website = "https://shirakumo.org/project/blender-addons/"
 copyright = ["Yukari Hafner"]
 
 [permissions]

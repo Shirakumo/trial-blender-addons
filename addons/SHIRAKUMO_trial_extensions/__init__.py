@@ -14,8 +14,8 @@ bl_info = {
     "category": "Import-Export",
     "location": "File > Export > glTF 2.0",
     "description": "Addon for Trial game engine extensions",
-    "tracker_url": "https://github.com/shirakumo/trial-blender-addons/issues",
-    "url": "https://github.com/shirakumo/trial-blender-addons",
+    "tracker_url": "https://shirakumo.org/project/trial-blender-addons/issues",
+    "url": "https://shirakumo.org/project/trial-blender-addons",
 }
 
 modules = [
