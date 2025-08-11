@@ -47,6 +47,12 @@ class glTF2ExportUserExtension:
         if (bpy.app.version[0] == 4 and bpy.app.version[1] == 4):
             message_box("Cannot export animations properly on Blender 4.4! Please use 4.3 or a later version.", icon='WARNING_LARGE')
 
+        data = {}
+        for prop in bpy.context.scene.shirakumo_trial_file_properties.metadata:
+            if prop.name != "":
+                data[prop.name] = prop.value
+
+        data = [('metadata', data)]
         bg = blender_object.world.node_tree.nodes['Background']
         if bg and bg.inputs and bg.inputs[0].links:
             int = bg.inputs[1].default_value
@@ -77,11 +83,11 @@ class glTF2ExportUserExtension:
                 if path.startswith("/"):
                     path = os.path.relpath(path, os.path.dirname(export_settings['gltf_filepath']))
                 logger.info("Referencing %s with path %s", img.name, path)
-                self.add_extension(gltf2_node,
-                                   ("envmap", args_dict(
-                                       ("file", path),
-                                       ("color", [int,int,int], [1.0,1.0,1.0]),
-                                       ("orientation", ori))))
+                data.append(("envmap", args_dict(
+                    ("file", path),
+                    ("color", [int,int,int], [1.0,1.0,1.0]),
+                    ("orientation", ori))))
+        self.add_extension(gltf2_node, *data)
 
     def gather_node_hook(self, gltf2_node, blender_object, export_settings):
         if not self.properties.enabled:

@@ -401,6 +401,20 @@ class SHIRAKUMO_TRIAL_PT_edit_panel(bpy.types.Panel):
                 layout.column().operator("shirakumo_trial.rebake", text="ReBake AO for All")
             layout.column().operator("shirakumo_trial.reexport", text="ReExport GLB")
 
+class SHIRAKUMO_TRIAL_OT_add_metadata_field(bpy.types.Operator):
+    bl_idname = "shirakumo_trial.add_metadata_field"
+    bl_label = "Add Metadata Field"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = "Add a new metadata field."
+    
+    def invoke(self, context, event):
+        context.scene.shirakumo_trial_file_properties.metadata.add()
+        return {'FINISHED'}
+
+class SHIRAKUMO_TRIAL_metadata_property(bpy.types.PropertyGroup):
+    name: bpy.props.StringProperty(name="Name", default="", options=set())
+    value: bpy.props.StringProperty(name="Value", default="", options=set())
+
 class SHIRAKUMO_TRIAL_file_properties(bpy.types.PropertyGroup):
     ao_map_resolution: bpy.props.IntProperty(
         name="AO Map Resolution",
@@ -418,16 +432,40 @@ class SHIRAKUMO_TRIAL_file_properties(bpy.types.PropertyGroup):
         name="Default Camera Trigger Offset",
         default=[5,0,1.4137166], subtype='EULER', options=set(),
         description="The default offset of camera triggers")
+    metadata: bpy.props.CollectionProperty(
+        type=SHIRAKUMO_TRIAL_metadata_property,
+        name="Metadata",
+        options=set(),
+        description="Metadata fields for the scene.")
+
+class SHIRAKUMO_TRIAL_PT_scene_panel(bpy.types.Panel):
+    bl_idname = "SHIRAKUMO_TRIAL_PT_scene_panel"
+    bl_label = "Trial Extensions"
+    bl_space_type = "PROPERTIES"
+    bl_region_type = "WINDOW"
+    bl_context = "world"
+
+    def draw(self, context):
+        layout = self.layout
+        metadata = context.scene.shirakumo_trial_file_properties.metadata;
+        for prop in metadata:
+            col = layout.split()
+            col.prop(prop, "name", placeholder="Name", icon_only=True)
+            col.prop(prop, "value", placeholder="Value", icon_only=True)
+        layout.column().operator("shirakumo_trial.add_metadata_field", text="Add Metadata Field")
 
 registered_classes = [
+    SHIRAKUMO_TRIAL_metadata_property,
+    SHIRAKUMO_TRIAL_file_properties,
     SHIRAKUMO_TRIAL_OT_rebake,
     SHIRAKUMO_TRIAL_OT_reexport,
     SHIRAKUMO_TRIAL_OT_make_environment,
     SHIRAKUMO_TRIAL_OT_make_prop,
     SHIRAKUMO_TRIAL_OT_toggle_immovable,
     SHIRAKUMO_TRIAL_OT_export_as_object,
+    SHIRAKUMO_TRIAL_OT_add_metadata_field,
     SHIRAKUMO_TRIAL_PT_edit_panel,
-    SHIRAKUMO_TRIAL_file_properties,
+    SHIRAKUMO_TRIAL_PT_scene_panel
 ]
 
 def register():

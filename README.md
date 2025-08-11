@@ -88,4 +88,4 @@ On scenes the fields are:
    - ``file`` The path to the hdr environment map file
    - ``color`` A 3-component color multiplier of the environment map
    - ``orientation`` A 3-component vector designating the orientation of the environment map
-
+- ``metadata`` An object of arbitrary metadata fields.
